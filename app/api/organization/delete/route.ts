@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAdminClient, getVerifiedCaller } from '@/lib/supabase/admin';
+import { getVerifiedCaller } from '@/lib/supabase/admin';
 import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -24,24 +24,13 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'The organization name confirmation did not match.' }, { status: 400 });
     }
 
-    const admin = getAdminClient();
-    let error;
-
-    if (admin) {
-      // All organization-owned tables use ON DELETE CASCADE from organizations.
-      // This removes leads, discussions, activity, assignment history, and profiles
-      // atomically from the tenant boundary. The auth user itself is intentionally
-      // preserved so the owner can be invited or linked to a new organization later.
-      ({ error } = await admin.from('organizations').delete().eq('id', organizationId));
-    } else {
-      // The SQL migration provides a SECURITY DEFINER function for deployments
-      // that intentionally do not expose a service-role key to the app server.
-      const client = await createServerSupabaseClient();
-      if (!client) {
-        return NextResponse.json({ error: 'Supabase is not configured on the server.' }, { status: 500 });
-      }
-      ({ error } = await client.rpc('delete_current_organization', { p_organization_id: organizationId }));
+    // The SQL function performs the owner check and deletes the organization,
+    // all cascaded tenant data, and the current Supabase Auth user together.
+    const client = await createServerSupabaseClient();
+    if (!client) {
+      return NextResponse.json({ error: 'Supabase is not configured on the server.' }, { status: 500 });
     }
+    const { error } = await client.rpc('delete_current_organization', { p_organization_id: organizationId });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

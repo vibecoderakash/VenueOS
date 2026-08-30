@@ -46,6 +46,10 @@ BEGIN
 
   PERFORM set_config('app.organization_deletion', 'true', true);
   DELETE FROM public.organizations WHERE id = p_organization_id;
+
+  -- Remove the login identity too. This makes deletion a complete fresh start
+  -- and allows the same email address to register again.
+  DELETE FROM auth.users WHERE id = auth.uid();
 END;
 $$;
 
