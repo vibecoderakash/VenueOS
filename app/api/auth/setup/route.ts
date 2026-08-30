@@ -91,6 +91,9 @@ export async function POST(req: Request) {
     });
 
     if (authError) {
+      if (authError.status === 409 || authError.status === 422) {
+        return NextResponse.json({ error: SAFE_IDENTITY_ERRORS.EMAIL_ALREADY_EXISTS }, { status: 409 });
+      }
       const safeMsg = sanitizeErrorMessage(authError, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
       return NextResponse.json({ error: safeMsg }, { status: 400 });
     }
