@@ -443,6 +443,34 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
     const persistedLead = payload.lead as Lead;
     setLeads((current) => [persistedLead, ...current]);
+    const supabase = createBrowserClient();
+    if (supabase && organization.id && currentProfile.id) {
+      const activityInsert = supabase.from('lead_activity').insert({
+        organization_id: organization.id,
+        lead_id: persistedLead.id,
+        actor_id: currentProfile.id,
+        action_type: 'lead_created',
+        metadata: {
+          details: `Inquiry created for ${persistedLead.customer_name} (${persistedLead.event_type}) via ${persistedLead.source}`,
+        },
+      });
+      const writes = [activityInsert];
+      if (validated.initial_discussion?.trim()) {
+        writes.push(
+          supabase.from('lead_discussions').insert({
+            organization_id: organization.id,
+            lead_id: persistedLead.id,
+            author_id: currentProfile.id,
+            body: validated.initial_discussion.trim(),
+          })
+        );
+      }
+      const results = await Promise.all(writes);
+      const failedWrite = results.find((result) => result.error);
+      if (failedWrite?.error) {
+        console.error('Supabase lead metadata save failed:', failedWrite.error.message);
+      }
+    }
     return persistedLead;
 
     /*
