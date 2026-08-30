@@ -37,6 +37,13 @@ BEGIN
     RAISE EXCEPTION 'Only the organization owner can delete this organization';
   END IF;
 
+  -- Make the cascade compatible with older databases whose delete trigger
+  -- blocks every row whose OLD.role is owner. This is safe because the row is
+  -- deleted immediately afterward in the same transaction.
+  UPDATE public.profiles
+  SET role = 'admin'
+  WHERE id = auth.uid() AND organization_id = p_organization_id;
+
   PERFORM set_config('app.organization_deletion', 'true', true);
   DELETE FROM public.organizations WHERE id = p_organization_id;
 END;
