@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     // 3. Fallback mock / success response for client sync
     const mockLead = {
       id: `lead-${Date.now()}`,
-      organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
       ...normalizedData,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

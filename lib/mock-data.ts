@@ -1,7 +1,7 @@
 import { Lead, Profile, Organization, LeadDiscussion, LeadActivity } from '@/types/database';
 
 export const mockOrganization: Organization = {
-  id: 'org-star-celebration',
+  id: 'org-venue',
   name: 'Star Celebration - A Royal Banquet Hall',
   slug: 'star-celebration',
   phone: '+91 72600 71154',
@@ -21,7 +21,7 @@ export const mockOrganization: Organization = {
 export const mockProfiles: Profile[] = [
   {
     id: 'user-akash',
-    organization_id: 'org-star-celebration',
+    organization_id: 'org-venue',
     name: 'Akash Sah',
     full_name: 'Akash Sah',
     email: 'starcelebration.patna@gmail.com',
@@ -35,7 +35,7 @@ export const mockProfiles: Profile[] = [
   },
   {
     id: 'user-rahul',
-    organization_id: 'org-grand-imperial',
+    organization_id: 'org-venue',
     name: 'Rahul Verma',
     email: 'rahul@grandimperial.com',
     phone: '+91 98765 22222',
@@ -47,7 +47,7 @@ export const mockProfiles: Profile[] = [
   },
   {
     id: 'user-priya',
-    organization_id: 'org-grand-imperial',
+    organization_id: 'org-venue',
     name: 'Priya Singh',
     email: 'priya@grandimperial.com',
     phone: '+91 98765 33333',
@@ -59,7 +59,7 @@ export const mockProfiles: Profile[] = [
   },
   {
     id: 'user-vikram',
-    organization_id: 'org-grand-imperial',
+    organization_id: 'org-venue',
     name: 'Vikram Malhotra',
     email: 'vikram@grandimperial.com',
     phone: '+91 98765 44444',
@@ -71,7 +71,7 @@ export const mockProfiles: Profile[] = [
   },
   {
     id: 'user-neha',
-    organization_id: 'org-grand-imperial',
+    organization_id: 'org-venue',
     name: 'Neha Kapoor',
     email: 'neha@grandimperial.com',
     phone: '+91 98765 55555',
@@ -107,7 +107,7 @@ export const mockDiscussions: Record<string, LeadDiscussion[]> = {
   'lead-1': [
     {
       id: 'disc-1-1',
-      organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
       lead_id: 'lead-1',
       author_id: 'user-akash',
       body: 'Shared pricing catalog and premium stage decor options via WhatsApp. Customer is discussing the date with family elders and requested a callback today evening.',
@@ -117,7 +117,7 @@ export const mockDiscussions: Record<string, LeadDiscussion[]> = {
     },
     {
       id: 'disc-1-2',
-      organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
       lead_id: 'lead-1',
       author_id: 'user-rahul',
       body: 'Customer wants a 300 to 450-person reception in November. Asked for package pricing, veg+non-veg buffet menu combinations, and Imperial Hall photos with floral mandate.',
@@ -129,7 +129,7 @@ export const mockDiscussions: Record<string, LeadDiscussion[]> = {
   'lead-2': [
     {
       id: 'disc-2-1',
-      organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
       lead_id: 'lead-2',
       author_id: 'user-priya',
       body: 'Spoke with Mr. Singhania. Looking for an intimate Ring Ceremony + Cocktail setup for 200 guests. Requested a special live pasta counter and customized DJ setup.',
@@ -141,7 +141,7 @@ export const mockDiscussions: Record<string, LeadDiscussion[]> = {
   'lead-4': [
     {
       id: 'disc-4-1',
-      organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
       lead_id: 'lead-4',
       author_id: 'user-akash',
       body: 'Sent corporate banquet proposal with AV equipment, high-speed WiFi, and 3-course dinner layout for 600 delegates. Follow-up scheduled with their HR & Admin director.',
@@ -153,7 +153,7 @@ export const mockDiscussions: Record<string, LeadDiscussion[]> = {
   'lead-5': [
     {
       id: 'disc-5-1',
-      organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
       lead_id: 'lead-5',
       author_id: 'user-rahul',
       body: 'Booking confirmed! ₹3,00,000 advance received. Grand Imperial Ballroom locked for 10th Feb 2027 Wedding (500 pax). Transitioned lead to Converted.',
@@ -165,7 +165,7 @@ export const mockDiscussions: Record<string, LeadDiscussion[]> = {
   'lead-7': [
     {
       id: 'disc-7-1',
-      organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
       lead_id: 'lead-7',
       author_id: 'user-rahul',
       body: 'Visited hall on Sunday with bride and groom. They loved the outdoor lawn combination with the main ballroom. Discussion on corkage policy pending.',
@@ -180,7 +180,7 @@ export const mockActivity: Record<string, LeadActivity[]> = {
   'lead-1': [
     {
       id: 'act-1-1',
-      organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
       lead_id: 'lead-1',
       actor_id: 'user-akash',
       action_type: 'follow_up_updated',
@@ -190,7 +190,7 @@ export const mockActivity: Record<string, LeadActivity[]> = {
     },
     {
       id: 'act-1-2',
-      organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
       lead_id: 'lead-1',
       actor_id: 'user-akash',
       action_type: 'discussion_added',
@@ -200,7 +200,7 @@ export const mockActivity: Record<string, LeadActivity[]> = {
     },
     {
       id: 'act-1-3',
-      organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
       lead_id: 'lead-1',
       actor_id: 'user-priya',
       action_type: 'assigned',
@@ -210,7 +210,7 @@ export const mockActivity: Record<string, LeadActivity[]> = {
     },
     {
       id: 'act-1-4',
-      organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
       lead_id: 'lead-1',
       actor_id: 'user-rahul',
       action_type: 'lead_created',
@@ -224,7 +224,7 @@ export const mockActivity: Record<string, LeadActivity[]> = {
 export const mockLeads: Lead[] = [
   {
     id: 'lead-1',
-    organization_id: 'org-grand-imperial',
+    organization_id: 'org-venue',
     customer_name: 'Amit & Neha Kapur',
     phone: '9810123456',
     email: 'amit.kapur@gmail.com',
@@ -250,7 +250,7 @@ export const mockLeads: Lead[] = [
   },
   {
     id: 'lead-2',
-    organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
     customer_name: 'Rajesh Singhania',
     phone: '9820098765',
     email: 'rsinghania@industrialgrp.com',
@@ -275,7 +275,7 @@ export const mockLeads: Lead[] = [
   },
   {
     id: 'lead-3',
-    organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
     customer_name: 'Dr. Sunita Mehra',
     phone: '9871188223',
     email: 'dr.sunita@maxhealth.org',
@@ -300,7 +300,7 @@ export const mockLeads: Lead[] = [
   },
   {
     id: 'lead-4',
-    organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
     customer_name: 'TechCorp India (Gaurav Taneja)',
     phone: '9910022334',
     email: 'events@techcorp.in',
@@ -325,7 +325,7 @@ export const mockLeads: Lead[] = [
   },
   {
     id: 'lead-5',
-    organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
     customer_name: 'Rohan & Ananya Patel',
     phone: '9899112233',
     email: 'rohan.patel@patelconstructions.com',
@@ -350,7 +350,7 @@ export const mockLeads: Lead[] = [
   },
   {
     id: 'lead-6',
-    organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
     customer_name: 'Suresh Bhatia',
     phone: '9818833445',
     email: 'sbhatia@bhatiatax.com',
@@ -375,7 +375,7 @@ export const mockLeads: Lead[] = [
   },
   {
     id: 'lead-7',
-    organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
     customer_name: 'Kunal Oberoi',
     phone: '9873344556',
     email: 'kunal.oberoi@oberoilogistics.com',
@@ -400,7 +400,7 @@ export const mockLeads: Lead[] = [
   },
   {
     id: 'lead-8',
-    organization_id: 'org-grand-imperial',
+      organization_id: 'org-venue',
     customer_name: 'Manish & Pooja Agarwal',
     phone: '9811456789',
     email: 'manish.agarwal@textiles.com',
