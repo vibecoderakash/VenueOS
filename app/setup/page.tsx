@@ -383,6 +383,9 @@ export default function SetupPage() {
                   className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 bg-white hover:border-slate-300 focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 transition-all font-normal"
                 />
               </div>
+              <p className="mt-1.5 text-[11px] text-slate-500">
+                You will use this work email to sign in to VenueOS.
+              </p>
             </div>
 
             {/* Phone Number */}
