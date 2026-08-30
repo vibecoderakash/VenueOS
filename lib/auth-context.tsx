@@ -194,6 +194,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Fetch / sync the database profile asynchronously
         const dbProfile = await fetchProfile(session.user.id, session.user.email, session.user);
 
+        if (!dbProfile || !dbProfile.organization_id) {
+          // A Supabase Auth session can outlive an organization deletion. Do not
+          // render a misleading dashboard with fallback/demo profile data.
+          const supabase = createBrowserClient();
+          if (supabase) {
+            await supabase.auth.signOut().catch(() => {});
+          }
+          setUser(null);
+          setProfile(null);
+          setAuthStatus('unauthenticated');
+          setAuthError('Your account is not linked to an organization. Please contact an owner or complete setup.');
+          return;
+        }
+
         if (dbProfile && !dbProfile.is_active) {
           // Deactivated user: immediately sign out
           const supabase = createBrowserClient();
