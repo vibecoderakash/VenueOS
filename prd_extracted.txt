@@ -1,0 +1,495 @@
+VENUE OS
+Product Requirements Document - V1
+Banquet Hall Management SaaS
+Document
+Value
+Product
+Venue OS
+Product type
+Banquet hall management SaaS
+Current release
+V1 - Lead Management
+Primary backend
+Supabase (PostgreSQL + Auth)
+Primary frontend
+Next.js + TypeScript
+UI system
+Tailwind CSS + shadcn/ui
+Deployment
+Vercel
+Status
+Draft for product review
+1. Executive Summary
+Venue OS is a purpose-built SaaS platform for banquet halls. It is not a generic CRM. The long-term product is intended to become the operating system for banquet-hall sales and operations, with modules added over time.
+V1 focuses only on Lead Management. The first problem to solve is lead follow-up and conversation continuity: when a customer talks to one team member today and another team member tomorrow, the second person should be able to open the lead and immediately understand what was discussed previously, what the customer wants, and what the next action is.
+The core interaction is intentionally simple: open lead -> read discussion history -> call or WhatsApp customer -> add a short manual discussion note -> set next follow-up. No AI-generated summaries or complex workflow automation are required in V1.
+2. Product Vision
+Venue OS should become the central workspace a banquet hall uses to manage its customer journey from first inquiry through booking and post-booking operations.
+V1: Lead Management
+Future modules: Bookings, Quotations, Calendar/Availability, Payments, Customers, Vendors/Operations, Reports, and other banquet-hall workflows
+All future modules should share the same customer, event, venue, and team data model where appropriate.
+The product UI should look and feel like a professional business application, not like a WhatsApp clone. WhatsApp is an external communication channel, not the primary product metaphor.
+3. Target Users
+Role
+Primary needs
+V1 permissions
+Owner / Admin
+Visibility across all leads, team activity, performance, and configuration.
+Full access
+Sales / Front Desk
+Work assigned leads, call/WhatsApp customers, record discussions, update status, schedule follow-ups.
+Create/edit leads and manage assigned leads
+Manager
+Monitor team workload and overdue follow-ups; reassign leads when needed.
+View all leads; manage assignments; update leads
+4. V1 Goals
+Create one reliable record for every banquet-hall lead.
+Preserve a chronological history of customer discussions.
+Make the current customer context understandable in seconds.
+Make follow-up scheduling quick and visible.
+Give each lead clear ownership inside the team.
+Reduce missed follow-ups and repeated questions to customers.
+Provide a product foundation that can support future banquet-hall modules.
+5. Non-Goals for V1
+Automatic WhatsApp message synchronization.
+Meta Lead Ads API integration.
+AI-generated conversation summaries.
+AI lead scoring or automated recommendations.
+Automated WhatsApp follow-up messages.
+Quotation generation.
+Booking management and calendar availability.
+Payment collection or invoicing.
+Advanced marketing automation.
+Complex reporting or BI dashboards.
+@mentions and team notification workflows.
+6. Core User Problem
+A banquet-hall lead can interact with multiple team members across several days. The sales process loses context when information remains scattered across WhatsApp chats, memory, notebooks, spreadsheets, or personal phones. Venue OS centralizes that context in the lead record.
+The primary question the product must answer is:
+"What happened with this customer last time, and what should we do next?"
+7. Primary V1 Workflow
+Step
+Action
+Expected behavior
+1
+Lead arrives
+Lead is received manually in V1. Meta/WhatsApp integration can be added later.
+2
+Assign
+Lead is assigned to a team member.
+3
+Open lead
+Team member sees customer details, current status, follow-up and discussion history.
+4
+Contact customer
+Use quick Call or WhatsApp action.
+5
+Record discussion
+Team member manually adds a short plain-text summary of what was discussed.
+6
+Set next follow-up
+Optional date and time are added.
+7
+Update status
+Lead moves to the appropriate status.
+8
+Repeat
+Any team member can later open the same lead and understand the context.
+8. Information Architecture
+The application shell should be designed as a multi-module SaaS from day one, even though only Leads is implemented in V1.
+Navigation item
+V1 state
+Future intent
+Dashboard
+Active
+Team activity and operational overview
+Leads
+Active
+Core V1 module
+Bookings
+Placeholder / disabled
+Booking lifecycle
+Quotations
+Placeholder / disabled
+Create and manage quotations
+Calendar
+Placeholder / disabled
+Venue availability and event calendar
+Customers
+Optional foundation
+Customer history across leads/bookings
+Payments
+Placeholder / disabled
+Payment tracking
+Reports
+Basic / limited
+Operational and sales reporting
+Settings
+Active
+Team, statuses, preferences, business configuration
+9. V1 Functional Requirements
+9.1 Dashboard
+Show New Leads count.
+Show Follow-ups Due Today.
+Show Overdue Follow-ups.
+Show Active / Interested Leads.
+Show Converted Leads.
+Show a recent activity feed: new lead, assignment change, status change, discussion added, follow-up updated.
+Dashboard should prioritize action over decorative analytics.
+9.2 Lead Inbox
+Provide a searchable list of leads.
+Display customer name, lead type, event date (if available), last discussion preview, status, priority, owner, and follow-up indicator.
+Allow sorting/filtering by status, owner, priority, follow-up state, and lead source.
+Use clear visual indicators for overdue and due-today follow-ups.
+Do not make the lead list imitate WhatsApp. It may use familiar conversation cues, but remains a CRM workspace.
+9.3 Create Lead
+Field
+Required
+Purpose
+Customer name
+Yes
+Primary display name
+Phone number
+Yes
+Contact + duplicate check
+Lead source
+Recommended
+Meta, WhatsApp, Instagram, Facebook, Website, Google, Referral, Walk-in, Other
+Lead type
+Recommended
+Wedding, Reception, Birthday, Ring Ceremony, Anniversary, Corporate, Party, Other
+Event date
+Optional
+Key banquet-hall requirement
+Expected guest count
+Optional
+Useful for qualification
+Assigned team member
+Optional
+Lead ownership
+Priority
+Default: Medium
+High / Medium / Low
+Initial requirement
+Optional
+Short description of inquiry
+9.4 Lead Detail
+Header: customer name + phone number.
+Quick actions: Call and WhatsApp.
+Current status.
+Priority.
+Assigned team member.
+Event date, event type, guest count, and other banquet-specific context when available.
+Next follow-up date/time.
+Chronological discussion timeline.
+Simple Add Discussion action.
+Archive action for closed/lost leads.
+9.5 Discussion Timeline
+This is the most important feature in V1.
+Every discussion entry is manually added by a team member.
+Each entry stores author, timestamp, and discussion text.
+Entries are shown in reverse chronological order, with the latest interaction most visible.
+The discussion text should be short and plain. No mandatory structured form is required.
+Users can edit/delete their own recent entries according to role policy; admin can correct entries when necessary.
+Example
+Rahul - 25 Aug, 4:30 PM: Customer wants a 300-person reception in November. Asked for package pricing and hall photos.
+Akash - 24 Aug, 6:15 PM: Shared pricing. Customer is discussing the date with family and requested a callback tomorrow.
+9.6 Follow-up
+Each lead can have one active next follow-up in V1.
+Follow-up includes date and optional time.
+Optional follow-up note can explain why the call is needed.
+System visually marks Today, Upcoming, and Overdue.
+Overdue follow-ups remain visible until completed, rescheduled, or cleared.
+9.7 Lead Status
+Status
+Meaning
+New
+Lead has arrived but has not yet been meaningfully contacted.
+Contacted
+Initial conversation has happened.
+Interested
+Customer is actively considering the venue/package.
+Follow-up
+A further customer action is scheduled or pending.
+Converted
+Booking/order is confirmed.
+Lost
+Lead is no longer expected to convert.
+Status should remain intentionally small in V1. More detailed stages can be configurable later if real usage proves they are needed.
+9.8 Priority
+High - requires attention / strong conversion potential or urgent date.
+Medium - normal active lead.
+Low - low urgency or lower immediate intent.
+9.9 Call and WhatsApp Actions
+Call button should invoke the device/browser phone action when supported.
+WhatsApp button should open a WhatsApp conversation using the stored phone number.
+These are quick actions and should not replace the discussion log; the team still records the outcome manually.
+9.10 Search and Filters
+Search by customer name.
+Search by phone number.
+Search discussion text / keywords.
+Filter by status, assigned member, lead source, event type, priority, and follow-up state.
+9.11 Duplicate Detection
+Phone number is the primary duplicate identifier in V1.
+When a matching active lead exists, show a clear warning and link to the existing lead.
+Do not silently merge records.
+9.12 Archive
+Archive converted or lost/closed leads without deleting them.
+Archived leads remain searchable.
+Archive should be reversible by authorized users.
+9.13 Team Activity
+Record who added a discussion.
+Record status, assignment, and follow-up changes.
+Show timestamps for all activity.
+No @mentions or notification system in V1.
+10. Banquet-Hall-Specific Data Model
+Because Venue OS is purpose-built for banquet halls, V1 should capture information that helps a sales team qualify an event inquiry. These fields should be lightweight and not turn lead creation into a long form.
+Field
+Type
+Notes
+Lead
+Entity
+Core sales record
+Customer name
+Text
+Customer/contact display name
+Phone
+Text
+Primary contact identifier
+Lead source
+Enum/Text
+Marketing/source attribution
+Event type
+Enum
+Wedding, Reception, Birthday, Ring Ceremony, Anniversary, Corporate, Party, Other
+Event date
+Date
+Requested/known event date
+Guest count
+Integer
+Expected number of guests
+Budget
+Numeric, optional
+Can be added if useful to qualification
+Requirement
+Text
+Short free-form customer requirement
+Assigned user
+Relation
+Current owner
+Status
+Enum
+V1 status set
+Priority
+Enum
+High / Medium / Low
+Next follow-up
+DateTime
+Current scheduled follow-up
+Archived
+Boolean
+Controls active/archive state
+11. Database Design - Supabase
+Supabase should be used as the backend platform, with PostgreSQL as the system of record. The relational model fits Venue OS because future modules will share customers, users, leads, bookings, quotations, events, and payments.
+Table
+Key columns
+Purpose
+organizations
+id, name, created_at
+Tenant/account boundary for SaaS.
+users / profiles
+id, organization_id, name, role, phone, active
+Application users and roles.
+leads
+id, organization_id, customer_name, phone, source, event_type, event_date, guest_count, budget, requirement, owner_id, status, priority, next_follow_up_at, archived_at, created_at, updated_at
+Core V1 lead record.
+lead_discussions
+id, lead_id, organization_id, author_id, body, created_at, updated_at
+Manual discussion history.
+lead_activity
+id, lead_id, organization_id, actor_id, action_type, metadata, created_at
+Audit/activity feed.
+Important relational rules: every tenant-owned row must include organization_id; lead_discussions and lead_activity belong to a lead; owner_id and author_id point to users/profiles; future modules should reference customer/lead/event identifiers rather than duplicating data.
+12. Multi-Tenant SaaS Foundation
+Venue OS is intended as a SaaS product, so tenant isolation must be designed from V1.
+Every organization (banquet hall business) must have its own data boundary.
+Supabase Row Level Security (RLS) should enforce organization-level access.
+Users must never be able to query another organization's leads, discussions, or activity through the client.
+All sensitive authorization checks must be enforced server-side/database-side, not only by UI logic.
+13. Authentication and Authorization
+Use Supabase Auth for authentication.
+Start with email/password or magic-link authentication depending on implementation preference.
+Use role-based access: Owner/Admin, Manager, Sales/Team Member.
+V1 does not need highly granular permission matrices.
+All authenticated API/data requests must be scoped to the active organization.
+14. Technology Stack
+Layer
+Technology
+Reason
+Frontend
+Next.js + TypeScript
+Modern React framework, routing, server/client components, and scalable application structure.
+UI
+Tailwind CSS + shadcn/ui
+Fast, consistent, professional CRM interface with reusable components.
+Backend
+Supabase
+PostgreSQL database, authentication, row-level security, and API capabilities in one platform.
+Hosting
+Vercel
+Natural deployment target for Next.js.
+Validation
+Zod or equivalent
+Shared client/server validation for forms and API boundaries.
+Data fetching
+Native fetch/server actions or a light query layer
+Keep V1 simple; avoid unnecessary state-management complexity.
+15. Frontend Application Structure
+App shell with persistent sidebar, header, organization context, and user menu.
+Dashboard route.
+Leads list route.
+Lead detail route.
+Settings/team route.
+Future modules should be represented in navigation without requiring the V1 codebase to be rewritten.
+Components should be reusable across future modules: tables, filters, forms, cards, status badges, date/time controls, activity timeline, modals, and confirmation dialogs.
+16. UI / UX Requirements
+Professional SaaS/CRM visual language, not a WhatsApp replica.
+Clear information hierarchy and generous spacing.
+Fast lead lookup and minimal clicks.
+Lead context should be visible without opening multiple screens.
+Discussion history should be visually separated by author and timestamp.
+Follow-up state should be visually obvious.
+Primary actions should be easy to access from the lead detail header.
+The interface must remain responsive for desktop-first team use and usable on smaller screens.
+17. Detailed Lead Screen Acceptance Criteria
+Area
+Acceptance criterion
+Lead identity
+Customer name and phone number are visible at the top.
+Contact actions
+User can tap/click Call or WhatsApp.
+Ownership
+Current assigned team member is visible.
+Context
+Event type, event date, guest count, and requirement are visible when available.
+Status
+Current status can be changed easily.
+Priority
+Priority can be changed easily.
+Discussion
+Past discussions show author + timestamp + manual summary text.
+New entry
+User can add a discussion without completing a long form.
+Follow-up
+User can set/change the next follow-up date/time.
+Activity
+Important changes can be traced to a user and timestamp.
+Persistence
+Refresh/reopen must preserve the lead history and current state.
+18. V1 Performance Requirements
+Lead list should feel instant for normal tenant sizes.
+Common searches should return promptly without full-page reloads.
+Adding a discussion should save and render without requiring navigation away from the lead.
+Dashboard should avoid expensive unbounded queries.
+Pagination or cursor-based loading should be used for large lead histories.
+19. Security Requirements
+Use Supabase Auth for identity.
+Enforce tenant isolation with PostgreSQL RLS.
+Validate and authorize all mutations server-side.
+Do not expose service-role keys in the browser.
+Normalize/validate phone numbers before duplicate checks.
+Log sensitive state changes such as assignment/status updates.
+Use least-privilege database access patterns.
+20. Error and Empty States
+No leads: explain how to create the first lead.
+No search results: show a clear empty state and reset-search action.
+Duplicate phone: show existing lead and provide a clear path to open it.
+Save failure: preserve entered text and allow retry.
+Permission denied: explain that the user does not have access.
+Network failure: show a non-blocking error and retry option where feasible.
+21. Analytics and Reporting - V1
+Keep reporting intentionally light. Venue OS V1 should report operational counts rather than attempting to become a full BI platform.
+Total active leads.
+New leads by date range.
+Follow-ups due/overdue.
+Leads by status.
+Leads by owner.
+Converted vs lost counts.
+22. Future Product Modules
+Module
+Purpose
+Likely relationship to Leads
+Bookings
+Manage confirmed events and booking details.
+Converted lead becomes a booking/customer record.
+Quotations
+Create/send package pricing and revisions.
+Quotation linked to lead.
+Calendar
+Venue availability and event schedule.
+Lead event date becomes booking/calendar context.
+Payments
+Track advance and outstanding payments.
+Payment linked to booking/customer.
+Customers
+Long-term customer history.
+Lead converts into persistent customer relationship.
+Reports
+Sales and operational reporting.
+Aggregates lead, booking and payment data.
+23. Suggested V2 Integrations
+Meta Lead Ads integration for automatic lead creation.
+WhatsApp Business integration for messaging/context sync where technically and commercially appropriate.
+Calendar integration.
+Online quotation sharing.
+Payment gateway integrations.
+24. Product Principles
+Principle
+Meaning
+Context over complexity
+A short, useful discussion history is more valuable than a large number of mandatory fields.
+Fast daily workflow
+The team should be able to update a lead in seconds.
+Purpose-built for banquet halls
+Fields and workflows should reflect real venue sales operations.
+Manual first, automation later
+V1 should solve the workflow reliably before adding AI and automation.
+Modular architecture
+Future modules should plug into a shared product foundation.
+Single source of truth
+Lead history should live in Venue OS rather than being scattered across people and spreadsheets.
+25. V1 Definition of Done
+A tenant can create and manage banquet-hall leads.
+A team member can be assigned to a lead.
+A user can call or open WhatsApp from the lead.
+A user can record a short discussion after each interaction.
+Discussion history persists chronologically and shows author + timestamp.
+A user can set and update a next follow-up.
+The system clearly shows due and overdue follow-ups.
+A user can change status and priority.
+A user can search and filter leads.
+Duplicate phone numbers are detected.
+Leads can be archived and recovered by authorized users.
+Admin/manager/team-member access is scoped correctly.
+RLS prevents cross-tenant access.
+The app is deployed and usable in production through Vercel + Supabase.
+26. Example End-to-End Scenario
+A Meta advertisement generates an inquiry for a wedding reception. In V1, the team creates the lead manually and records the event type, desired date, guest count, and customer requirement. A salesperson calls the customer and writes a two-line discussion summary. The salesperson schedules a follow-up for tomorrow. The next day, another team member opens the lead, reads the previous discussion, sees the follow-up, taps Call, completes the conversation, writes the new summary, and schedules the next action. No one needs to ask the previous salesperson what happened.
+27. Product Success Metrics for V1
+Metric
+Why it matters
+% of active leads with a next follow-up
+Measures whether leads have a clear next action.
+Overdue follow-ups
+Direct signal of process leakage.
+Discussion entries per contacted lead
+Shows whether customer context is being captured.
+Lead response/update speed
+Measures how quickly the team processes new inquiries.
+Lead conversion rate
+Basic business outcome metric.
+Active usage by team members
+Determines whether the system is actually adopted.
+28. Final Product Direction
+Venue OS should begin as a focused banquet-hall lead management product, but its architecture should establish the long-term foundation for a complete banquet-hall operating system. The first version should win by being easy to use, fast to update, and excellent at preserving customer conversation context.
+The V1 product promise is simple:
+Open the lead. Understand the customer. Know the next action.

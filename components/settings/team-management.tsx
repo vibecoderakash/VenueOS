@@ -1,0 +1,913 @@
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Users,
+  UserPlus,
+  Mail,
+  Phone,
+  X,
+  Pencil,
+  Shield,
+  CheckCircle2,
+  AlertTriangle,
+  Lock,
+  RefreshCw,
+  Power,
+  ShieldAlert,
+  UserCheck,
+  Building2,
+  Trash2,
+} from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import { createBrowserClient } from '@/lib/supabase/client';
+import { Profile, UserRole } from '@/types/database';
+
+const ROLE_LABELS: Record<string, string> = {
+  owner: 'Owner',
+  manager: 'Manager',
+  staff: 'Staff',
+  admin: 'Manager',
+  sales: 'Staff',
+  front_desk: 'Staff',
+};
+
+const ROLE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
+  owner: { bg: 'rgba(245, 158, 11, 0.12)', color: '#d97706', border: 'rgba(245, 158, 11, 0.3)' },
+  manager: { bg: 'rgba(79, 70, 229, 0.12)', color: '#4f46e5', border: 'rgba(79, 70, 229, 0.3)' },
+  staff: { bg: 'rgba(100, 116, 139, 0.12)', color: '#475569', border: 'rgba(100, 116, 139, 0.25)' },
+  admin: { bg: 'rgba(79, 70, 229, 0.12)', color: '#4f46e5', border: 'rgba(79, 70, 229, 0.3)' },
+  sales: { bg: 'rgba(100, 116, 139, 0.12)', color: '#475569', border: 'rgba(100, 116, 139, 0.25)' },
+  front_desk: { bg: 'rgba(100, 116, 139, 0.12)', color: '#475569', border: 'rgba(100, 116, 139, 0.25)' },
+};
+
+export function TeamManagement() {
+  const { profile: currentUser, isOwner, isManager, isStaff, isLoading: isAuthLoading } = useAuth();
+
+  const [members, setMembers] = useState<Profile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Add Staff Modal
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newRole, setNewRole] = useState<'manager' | 'staff'>('staff');
+  const [newPassword, setNewPassword] = useState('');
+
+  // Edit Staff Modal
+  const [editingMember, setEditingMember] = useState<Profile | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editRole, setEditRole] = useState<'manager' | 'staff'>('staff');
+
+  // Delete Staff Modal
+  const [memberToDelete, setMemberToDelete] = useState<Profile | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  // Helper for authenticated headers
+  const getAuthHeaders = async (forceRefresh = false) => {
+    const supabase = createBrowserClient();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (supabase) {
+      let session = (await supabase.auth.getSession()).data.session;
+      if (forceRefresh) {
+        const refreshed = await supabase.auth.refreshSession();
+        session = refreshed.data.session || session;
+      }
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+    }
+    return headers;
+  };
+
+  const loadMembersFromBrowserSession = async (): Promise<boolean> => {
+    const supabase = createBrowserClient();
+    if (!supabase) return false;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) return false;
+
+    setMembers(
+      (data || []).map((member) => ({
+        id: member.id,
+        name: member.name || member.full_name || 'Staff User',
+        full_name: member.full_name || member.name || 'Staff User',
+        email: member.email || '',
+        phone: member.phone || null,
+        role: member.role || 'staff',
+        active: member.is_active !== undefined ? Boolean(member.is_active) : Boolean(member.active),
+        is_active: member.is_active !== undefined ? Boolean(member.is_active) : Boolean(member.active),
+        created_at: member.created_at || new Date().toISOString(),
+        updated_at: member.updated_at || new Date().toISOString(),
+      }))
+    );
+    return true;
+  };
+
+  // Fetch team members from server API
+  const fetchMembers = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMsg('');
+    try {
+      let res = await fetch('/api/team/list', {
+        headers: await getAuthHeaders(),
+        credentials: 'include',
+      });
+
+      // A cached access token can outlive the server-side session during a
+      // hard navigation. Refresh it once and retry before showing an error.
+      if (res.status === 401) {
+        res = await fetch('/api/team/list', {
+          headers: await getAuthHeaders(true),
+          credentials: 'include',
+        });
+
+        // The browser can reach Supabase even when the local Next.js process
+        // cannot validate bearer tokens due to its restricted network.
+        if (res.status === 401 && (await loadMembersFromBrowserSession())) {
+          return;
+        }
+      }
+
+      if (!res.ok) {
+        const err = await res.json();
+        setErrorMsg(err.error || 'Failed to load team members.');
+        setIsLoading(false);
+        return;
+      }
+      const data = await res.json();
+      setMembers(data.members || []);
+    } catch (err) {
+      console.error('Fetch members error:', err);
+      setErrorMsg('Failed to load team list.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Auth restoration and team loading happen independently on a hard
+    // navigation. Do not send the first request before a session exists, and
+    // retry automatically when AuthProvider finishes restoring the profile.
+    if (isAuthLoading || !currentUser?.id) return;
+    fetchMembers();
+  }, [fetchMembers, isAuthLoading, currentUser?.id]);
+
+  // Handle Add Staff
+  const handleAddStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim() || !newEmail.trim()) {
+      showToast('Name and Email are required.');
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/team/create-staff', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          full_name: newName.trim(),
+          email: newEmail.trim().toLowerCase(),
+          phone: newPhone.trim() || null,
+          role: newRole,
+          password: newPassword.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to create staff account.');
+        setIsAdding(false);
+        return;
+      }
+
+      showToast(data.message || 'Staff account created successfully!');
+      setIsAddOpen(false);
+      setNewName('');
+      setNewEmail('');
+      setNewPhone('');
+      setNewPassword('');
+      setNewRole('staff');
+      fetchMembers();
+    } catch (err) {
+      showToast('Network error while adding staff member.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  // Handle Edit Staff
+  const handleUpdateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMember) return;
+
+    setIsUpdating(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/team/update-staff', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          memberId: editingMember.id,
+          full_name: editName.trim(),
+          phone: editPhone.trim() || null,
+          role: isOwner ? editRole : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to update member.');
+        setIsUpdating(false);
+        return;
+      }
+
+      showToast('Profile updated successfully.');
+      setEditingMember(null);
+      fetchMembers();
+    } catch {
+      showToast('Network error while updating member.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle Toggle Active Status
+  const handleToggleActive = async (member: Profile) => {
+    if (member.role === 'owner') {
+      showToast('The Owner account cannot be deactivated.');
+      return;
+    }
+
+    if (isManager && member.role === 'manager') {
+      showToast('Managers cannot deactivate other Managers.');
+      return;
+    }
+
+    const nextStatus = !member.is_active;
+    const confirmMsg = nextStatus
+      ? `Activate account for ${member.full_name || member.name}?`
+      : `Deactivate account for ${member.full_name || member.name}? They will not be able to log in until reactivated.`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/team/update-staff', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          memberId: member.id,
+          is_active: nextStatus,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to change member status.');
+        return;
+      }
+
+      showToast(`${member.full_name || member.name} ${nextStatus ? 'activated' : 'deactivated'}.`);
+      fetchMembers();
+    } catch {
+      showToast('Failed to update status.');
+    }
+  };
+
+  // Handle Delete Staff
+  const confirmDeleteStaff = async () => {
+    if (!memberToDelete) return;
+    if (memberToDelete.role === 'owner') {
+      showToast('The Owner account cannot be deleted.');
+      setMemberToDelete(null);
+      return;
+    }
+    if (memberToDelete.id === currentUser?.id) {
+      showToast('You cannot delete your own account.');
+      setMemberToDelete(null);
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const headers = await getAuthHeaders();
+      const res = await fetch('/api/team/delete-staff', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          memberId: memberToDelete.id,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showToast(data.error || 'Failed to delete member.');
+        setIsDeleting(false);
+        return;
+      }
+
+      showToast(data.message || `${memberToDelete.full_name || memberToDelete.name} has been deleted.`);
+      setMemberToDelete(null);
+      fetchMembers();
+    } catch {
+      showToast('Network error while deleting member.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Auth Loading Skeleton
+  if (isAuthLoading) {
+    return (
+      <div className="p-12 text-center text-foreground-muted">
+        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+        <span className="text-xs">Verifying team permissions...</span>
+      </div>
+    );
+  }
+
+  // Staff permission guard (only block when user is confirmed NOT owner and NOT manager)
+  if (currentUser && !isOwner && !isManager) {
+    return (
+      <div className="p-8 max-w-4xl mx-auto">
+        <div
+          className="rounded-2xl p-8 text-center space-y-4 border"
+          style={{
+            backgroundColor: 'var(--surface)',
+            borderColor: 'var(--border)',
+          }}
+        >
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <h2 className="text-lg font-bold text-foreground">
+            Access Restricted
+          </h2>
+          <p className="text-sm text-foreground-secondary max-w-md mx-auto leading-relaxed">
+            Team account management is reserved for Venue Owners and General Managers. Please contact your administrator if you need permission changes.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 max-w-6xl mx-auto">
+      
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 text-white text-sm shadow-2xl animate-slideUp">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+          <span>{toast}</span>
+        </div>
+      )}
+
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
+            <Users className="w-6 h-6 text-primary" />
+            <span>Team & Staff Management</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-foreground-secondary mt-1">
+            Add managers and staff, manage role permissions, and control account status for your venue.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={fetchMembers}
+            disabled={isLoading}
+            className="w-9 h-9 rounded-xl flex items-center justify-center border transition-colors cursor-pointer"
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderColor: 'var(--border)',
+              color: 'var(--foreground-muted)',
+            }}
+            title="Refresh team"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+
+          {(isOwner || isManager) && (
+            <button
+              onClick={() => {
+                setNewRole('staff');
+                setIsAddOpen(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm text-white shadow-md transition-all cursor-pointer hover:opacity-95"
+              style={{ backgroundColor: 'var(--primary)' }}
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>+ Add Staff</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Error Alert */}
+      {errorMsg && (
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {/* Team Table Card */}
+      <div
+        className="rounded-2xl border overflow-hidden shadow-sm transition-colors"
+        style={{
+          backgroundColor: 'var(--surface)',
+          borderColor: 'var(--border)',
+        }}
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs sm:text-sm">
+            <thead>
+              <tr
+                className="border-b text-[11px] uppercase tracking-wider font-semibold"
+                style={{
+                  backgroundColor: 'var(--surface-secondary)',
+                  borderColor: 'var(--border)',
+                  color: 'var(--foreground-muted)',
+                }}
+              >
+                <th className="py-3.5 px-4 sm:px-6">Member Name</th>
+                <th className="py-3.5 px-4 sm:px-6">Contact Details</th>
+                <th className="py-3.5 px-4 sm:px-6">Assigned Role</th>
+                <th className="py-3.5 px-4 sm:px-6">Status</th>
+                <th className="py-3.5 px-4 sm:px-6 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
+              {isLoading && members.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-foreground-muted">
+                    <div className="flex items-center justify-center gap-2.5">
+                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <span>Loading team members...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : members.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-foreground-muted">
+                    No team members found. Click &quot;+ Add Staff&quot; to add staff or managers.
+                  </td>
+                </tr>
+              ) : (
+                members.map((member) => {
+                  const roleStyle = ROLE_COLORS[member.role] || ROLE_COLORS.staff;
+                  const isCurrent = currentUser?.id === member.id;
+                  const canEdit = isOwner || (isManager && member.role === 'staff');
+                  const canDelete = isOwner && member.role !== 'owner';
+
+                  return (
+                    <tr
+                      key={member.id}
+                      className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
+                    >
+                      {/* Name & Avatar */}
+                      <td className="py-4 px-4 sm:px-6">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs flex-shrink-0 text-white shadow-sm"
+                            style={{
+                              backgroundColor: member.role === 'owner' ? '#d97706' : member.role === 'manager' ? '#4f46e5' : '#64748b',
+                            }}
+                          >
+                            {(member.full_name || member.name || 'U').charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-foreground flex items-center gap-2">
+                              <span>{member.full_name || member.name}</span>
+                              {isCurrent && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                                  You
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-foreground-muted">
+                              Joined {new Date(member.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Contact */}
+                      <td className="py-4 px-4 sm:px-6">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 text-foreground-secondary">
+                            <Mail className="w-3.5 h-3.5 text-foreground-muted" />
+                            <span>{member.email}</span>
+                          </div>
+                          {member.phone && (
+                            <div className="flex items-center gap-1.5 text-foreground-muted text-xs">
+                              <Phone className="w-3.5 h-3.5" />
+                              <span>{member.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Role Badge */}
+                      <td className="py-4 px-4 sm:px-6">
+                        <span
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wider border"
+                          style={{
+                            backgroundColor: roleStyle.bg,
+                            color: roleStyle.color,
+                            borderColor: roleStyle.border,
+                          }}
+                        >
+                          <Shield className="w-3 h-3" />
+                          <span>{ROLE_LABELS[member.role] || member.role}</span>
+                        </span>
+                      </td>
+
+                      {/* Status Badge */}
+                      <td className="py-4 px-4 sm:px-6">
+                        {member.is_active ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span>Active</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                            <span>Inactive</span>
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-4 px-4 sm:px-6 text-right">
+                        <div className="flex items-center justify-end gap-1 sm:gap-1.5">
+                          {canEdit && (
+                            <button
+                              onClick={() => {
+                                setEditingMember(member);
+                                setEditName(member.full_name || member.name || '');
+                                setEditPhone(member.phone || '');
+                                setEditRole((member.role as 'manager' | 'staff') || 'staff');
+                              }}
+                              className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+                              title="Edit member details"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {canEdit && member.role !== 'owner' && (
+                            <button
+                              onClick={() => handleToggleActive(member)}
+                              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                member.is_active
+                                  ? 'hover:bg-rose-50 text-foreground-muted hover:text-rose-600 dark:hover:bg-rose-950/30'
+                                  : 'hover:bg-emerald-50 text-foreground-muted hover:text-emerald-600 dark:hover:bg-emerald-950/30'
+                              }`}
+                              title={member.is_active ? 'Deactivate account' : 'Activate account'}
+                            >
+                              <Power className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {canDelete && (
+                            <button
+                              onClick={() => setMemberToDelete(member)}
+                              className="p-1.5 rounded-lg hover:bg-rose-500/10 text-foreground-muted hover:text-rose-600 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                              title={`Delete ${member.full_name || member.name}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* =========================================================================
+          MODAL: Add Staff / Manager
+          ========================================================================= */}
+      {isAddOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div
+            className="w-full max-w-md rounded-2xl border shadow-2xl p-6 sm:p-7 space-y-5"
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderColor: 'var(--border)',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Add New Staff or Manager</h3>
+                  <p className="text-xs text-foreground-muted">Grant authorized access to this venue</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsAddOpen(false)}
+                className="p-1 rounded-lg text-foreground-muted hover:text-foreground cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddStaff} className="space-y-4 text-xs sm:text-sm">
+              <div>
+                <label className="block font-semibold text-foreground-secondary mb-1">
+                  Full Name <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary"
+                  style={{ borderColor: 'var(--border)' }}
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-foreground-secondary mb-1">
+                  Work Email <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="staff@grandimperial.com"
+                  className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary"
+                  style={{ borderColor: 'var(--border)' }}
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-foreground-secondary mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  placeholder="+91 98765 43210"
+                  className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary"
+                  style={{ borderColor: 'var(--border)' }}
+                />
+              </div>
+
+              {/* Role Selection */}
+              <div>
+                <label className="block font-semibold text-foreground-secondary mb-1">
+                  Assigned Role <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value as 'manager' | 'staff')}
+                  disabled={!isOwner}
+                  className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary cursor-pointer"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  <option value="staff">Staff (Lead conversations, follow-ups)</option>
+                  {isOwner && <option value="manager">Manager (Manage staff & team activity)</option>}
+                </select>
+                {!isOwner && (
+                  <p className="text-[11px] text-foreground-muted mt-1">
+                    Only the Venue Owner can assign the Manager role.
+                  </p>
+                )}
+              </div>
+
+              {/* Initial Password */}
+              <div>
+                <label className="block font-semibold text-foreground-secondary mb-1">
+                  Initial Password <span className="text-foreground-muted font-normal">(Optional — auto-generated if left blank)</span>
+                </label>
+                <input
+                  type="text"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="e.g. Staff@GrandImperial2026!"
+                  className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary font-mono text-xs"
+                  style={{ borderColor: 'var(--border)' }}
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border text-foreground-secondary hover:bg-black/5 dark:hover:bg-white/5 font-medium transition-colors cursor-pointer"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isAdding}
+                  className="px-5 py-2.5 rounded-xl font-semibold text-white shadow-md transition-all cursor-pointer disabled:opacity-60"
+                  style={{ backgroundColor: 'var(--primary)' }}
+                >
+                  {isAdding ? 'Creating Account...' : 'Create Account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL: Edit Member
+          ========================================================================= */}
+      {editingMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div
+            className="w-full max-w-md rounded-2xl border shadow-2xl p-6 sm:p-7 space-y-5"
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderColor: 'var(--border)',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <Pencil className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Edit Team Member</h3>
+                  <p className="text-xs text-foreground-muted">{editingMember.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingMember(null)}
+                className="p-1 rounded-lg text-foreground-muted hover:text-foreground cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateStaff} className="space-y-4 text-xs sm:text-sm">
+              <div>
+                <label className="block font-semibold text-foreground-secondary mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary"
+                  style={{ borderColor: 'var(--border)' }}
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-foreground-secondary mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary"
+                  style={{ borderColor: 'var(--border)' }}
+                />
+              </div>
+
+              {isOwner && editingMember.role !== 'owner' && (
+                <div>
+                  <label className="block font-semibold text-foreground-secondary mb-1">
+                    Role
+                  </label>
+                  <select
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value as 'manager' | 'staff')}
+                    className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary cursor-pointer"
+                    style={{ borderColor: 'var(--border)' }}
+                  >
+                    <option value="staff">Staff</option>
+                    <option value="manager">Manager</option>
+                  </select>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingMember(null)}
+                  className="px-4 py-2.5 rounded-xl border text-foreground-secondary hover:bg-black/5 dark:hover:bg-white/5 font-medium transition-colors cursor-pointer"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdating}
+                  className="px-5 py-2.5 rounded-xl font-semibold text-white shadow-md transition-all cursor-pointer disabled:opacity-60"
+                  style={{ backgroundColor: 'var(--primary)' }}
+                >
+                  {isUpdating ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL: Delete Team Member Confirmation
+          ========================================================================= */}
+      {memberToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div
+            className="w-full max-w-md rounded-2xl border shadow-2xl p-6 sm:p-7 space-y-5"
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderColor: 'var(--border)',
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-foreground">
+                  Delete Team Member
+                </h3>
+                <p className="text-xs text-foreground-muted">
+                  Permanent removal from Venue OS
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/15 text-xs sm:text-sm text-foreground-secondary space-y-2">
+              <p>
+                Are you sure you want to permanently delete{' '}
+                <strong className="text-foreground">{memberToDelete.full_name || memberToDelete.name}</strong>{' '}
+                (<span className="font-mono text-xs">{memberToDelete.email}</span>)?
+              </p>
+              <p className="text-rose-600 dark:text-rose-400 text-xs font-medium leading-relaxed">
+                • Their access to Venue OS will be immediately revoked.<br />
+                • Their account credentials and profile will be permanently deleted.<br />
+                • Any banquet leads assigned to them will be unassigned.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setMemberToDelete(null)}
+                disabled={isDeleting}
+                className="px-4 py-2.5 rounded-xl border text-foreground-secondary hover:bg-black/5 dark:hover:bg-white/5 font-medium transition-colors cursor-pointer"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteStaff}
+                disabled={isDeleting}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-md transition-all cursor-pointer disabled:opacity-60"
+              >
+                <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
+                <span>{isDeleting ? 'Deleting...' : 'Delete Permanently'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
