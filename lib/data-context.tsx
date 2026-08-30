@@ -11,25 +11,13 @@ import {
   LeadPriority,
   DashboardMetrics 
 } from '@/types/database';
-import { 
-  mockOrganization, 
-  mockProfiles, 
-  mockLeads, 
-  mockDiscussions, 
-  mockActivity 
-} from './mock-data';
 import { CreateLeadInput, AddDiscussionInput, normalizePhone, createLeadSchema } from './validations/lead';
 import { isPast, isToday } from 'date-fns';
 import { useAuth } from '@/lib/auth-context';
+import { createBrowserClient } from '@/lib/supabase/client';
 
-const STORAGE_KEYS = {
-  LEADS: 'venue_os_leads_v1',
-  DISCUSSIONS: 'venue_os_discussions_v1',
-  ACTIVITY: 'venue_os_activity_v1',
-  CURRENT_USER: 'venue_os_active_user_v1',
-  AUTH_SESSION: 'venue_os_auth_session_v1',
-  ORGANIZATION: 'venue_os_org_v1',
-  PROFILES: 'venue_os_profiles_v1',
+const EMPTY_ORGANIZATION: Organization = {
+  id: '', name: '', currency: 'INR', created_at: '', updated_at: '',
 };
 
 interface DataContextType {
@@ -67,16 +55,55 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | null>(null);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
-  const [organization, setOrganization] = useState<Organization>(mockOrganization);
-  const [profiles, setProfiles] = useState<Profile[]>(mockProfiles);
-  const [currentProfileId, setCurrentProfileIdState] = useState<string>('user-akash');
+  const [organization, setOrganization] = useState<Organization>(EMPTY_ORGANIZATION);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [currentProfileId, setCurrentProfileIdState] = useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [discussions, setDiscussions] = useState<Record<string, LeadDiscussion[]>>({});
   const [activity, setActivity] = useState<Record<string, LeadActivity[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize from LocalStorage or Fallback to high-fidelity seed data
+  const { profile: authProfile, isAuthenticated: authIsAuthenticated } = useAuth();
+
+  // Business data is loaded from Supabase only. Browser storage is intentionally not used here.
+  useEffect(() => {
+    let cancelled = false;
+    const loadFromSupabase = async () => {
+      if (!authProfile?.organization_id) {
+        setOrganization(EMPTY_ORGANIZATION);
+        setProfiles(authProfile ? [authProfile] : []);
+        setLeads([]);
+        setDiscussions({});
+        setActivity({});
+        setIsAuthenticated(authIsAuthenticated);
+        setIsLoading(false);
+        return;
+      }
+      const supabase = createBrowserClient();
+      if (!supabase) { setIsLoading(false); return; }
+      setIsLoading(true);
+      const [orgResult, profilesResult, leadsResult, discussionsResult, activityResult] = await Promise.all([
+        supabase.from('organizations').select('*').eq('id', authProfile.organization_id).maybeSingle(),
+        supabase.from('profiles').select('*').eq('organization_id', authProfile.organization_id).order('created_at', { ascending: true }),
+        supabase.from('leads').select('*').eq('organization_id', authProfile.organization_id).order('created_at', { ascending: false }),
+        supabase.from('lead_discussions').select('*').eq('organization_id', authProfile.organization_id).order('created_at', { ascending: true }),
+        supabase.from('lead_activity').select('*').eq('organization_id', authProfile.organization_id).order('created_at', { ascending: false }),
+      ]);
+      if (cancelled) return;
+      if (orgResult.data) setOrganization(orgResult.data as Organization);
+      if (profilesResult.data) setProfiles(profilesResult.data as Profile[]);
+      if (leadsResult.data) setLeads(leadsResult.data as Lead[]);
+      if (discussionsResult.data) setDiscussions((discussionsResult.data as LeadDiscussion[]).reduce((all, item) => ({ ...all, [item.lead_id]: [...(all[item.lead_id] || []), item] }), {} as Record<string, LeadDiscussion[]>));
+      if (activityResult.data) setActivity((activityResult.data as LeadActivity[]).reduce((all, item) => ({ ...all, [item.lead_id]: [...(all[item.lead_id] || []), item] }), {} as Record<string, LeadActivity[]>));
+      setIsAuthenticated(authIsAuthenticated);
+      setIsLoading(false);
+    };
+    void loadFromSupabase().catch((error) => { console.error('Supabase data load failed:', error); setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, [authProfile, authIsAuthenticated]);
+
+  /*
   useEffect(() => {
     try {
       const storedLeads = localStorage.getItem(STORAGE_KEYS.LEADS);
@@ -203,24 +230,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   }, []);
+  */
 
   // Sync state helpers to localStorage
   const saveOrganization = (newOrg: Organization) => {
     setOrganization(newOrg);
-    try {
-      localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(newOrg));
-    } catch (e) {
-      console.error('Storage error', e);
-    }
   };
 
   const saveProfiles = (newProfiles: Profile[]) => {
     setProfiles(newProfiles);
-    try {
-      localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(newProfiles));
-    } catch (e) {
-      console.error('Storage error', e);
-    }
   };
 
   const updateOrganization = async (updates: Partial<Organization>): Promise<Organization> => {
@@ -239,32 +257,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const saveLeads = (newLeads: Lead[]) => {
     setLeads(newLeads);
-    try {
-      localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(newLeads));
-    } catch (e) {
-      console.error('Storage error', e);
-    }
   };
 
   const saveDiscussions = (newDiscussions: Record<string, LeadDiscussion[]>) => {
     setDiscussions(newDiscussions);
-    try {
-      localStorage.setItem(STORAGE_KEYS.DISCUSSIONS, JSON.stringify(newDiscussions));
-    } catch (e) {
-      console.error('Storage error', e);
-    }
   };
 
   const saveActivity = (newActivity: Record<string, LeadActivity[]>) => {
     setActivity(newActivity);
-    try {
-      localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify(newActivity));
-    } catch (e) {
-      console.error('Storage error', e);
-    }
   };
-
-  const { profile: authProfile } = useAuth();
 
   const currentProfile = useMemo(() => {
     if (authProfile) {
@@ -275,31 +276,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const setCurrentProfileId = (id: string) => {
     setCurrentProfileIdState(id);
-    try {
-      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, id);
-    } catch (e) {
-      console.error('Storage error', e);
-    }
   };
 
   const login = (profileId: string) => {
     setIsAuthenticated(true);
     setCurrentProfileIdState(profileId);
-    try {
-      localStorage.setItem(STORAGE_KEYS.AUTH_SESSION, 'true');
-      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, profileId);
-    } catch (e) {
-      console.error('Storage error', e);
-    }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
-    try {
-      localStorage.removeItem(STORAGE_KEYS.AUTH_SESSION);
-    } catch (e) {
-      console.error('Storage error', e);
-    }
   };
 
   const checkDuplicatePhone = useCallback(
@@ -722,13 +707,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setLeads([]);
     setDiscussions({});
     setActivity({});
-    try {
-      localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify([]));
-      localStorage.setItem(STORAGE_KEYS.DISCUSSIONS, JSON.stringify({}));
-      localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify({}));
-    } catch (e) {
-      console.error('Storage error', e);
-    }
   };
 
   // Calculate high-precision dashboard metrics
