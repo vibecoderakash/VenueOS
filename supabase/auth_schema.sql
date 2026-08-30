@@ -260,7 +260,7 @@ CREATE TRIGGER trg_profile_security
 CREATE OR REPLACE FUNCTION public.check_profile_delete_security()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF OLD.role = 'owner' THEN
+    IF OLD.role = 'owner' AND current_setting('app.organization_deletion', true) IS DISTINCT FROM 'true' THEN
         RAISE EXCEPTION 'The Owner account cannot be deleted.';
     END IF;
     RETURN OLD;
@@ -272,4 +272,3 @@ CREATE TRIGGER trg_profile_delete_security
     BEFORE DELETE ON public.profiles
     FOR EACH ROW
     EXECUTE FUNCTION public.check_profile_delete_security();
-

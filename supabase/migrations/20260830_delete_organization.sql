@@ -1,6 +1,23 @@
 -- Secure organization deletion for the Settings danger zone.
 -- The function verifies the current authenticated user is the organization owner,
 -- then relies on foreign-key ON DELETE CASCADE for all tenant-owned records.
+-- The trigger exception is scoped to this transaction only, so direct Owner
+-- profile deletion remains blocked everywhere else.
+CREATE OR REPLACE FUNCTION public.check_profile_delete_security()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF OLD.role = 'owner'
+     AND current_setting('app.organization_deletion', true) IS DISTINCT FROM 'true' THEN
+    RAISE EXCEPTION 'The Owner account cannot be deleted.';
+  END IF;
+  RETURN OLD;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.delete_current_organization(p_organization_id UUID)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -20,6 +37,7 @@ BEGIN
     RAISE EXCEPTION 'Only the organization owner can delete this organization';
   END IF;
 
+  PERFORM set_config('app.organization_deletion', 'true', true);
   DELETE FROM public.organizations WHERE id = p_organization_id;
 END;
 $$;
