@@ -752,12 +752,42 @@ export default function SettingsPage() {
 }
 
 function AccountSessionSection() {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, isOwner } = useAuth();
+  const { organization } = useData();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
     await signOut();
+  };
+
+  const handleDeleteOrganization = async () => {
+    if (deleteConfirmation.trim() !== organization.name.trim()) {
+      setDeleteError('Type the organization name exactly to continue.');
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      const response = await fetch('/api/organization/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmation: deleteConfirmation, organizationName: organization.name }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.error || 'Unable to delete organization.');
+      }
+      await signOut();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Unable to delete organization.');
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -795,6 +825,58 @@ function AccountSessionSection() {
           <span>{isSigningOut ? 'Signing out...' : 'Sign Out of Venue OS'}</span>
         </button>
       </div>
+
+      {isOwner && (
+        <div
+          className="rounded-[12px] p-5 space-y-3"
+          style={{ backgroundColor: 'var(--surface)', border: '1px solid rgba(244, 63, 94, 0.35)' }}
+        >
+          <div className="flex items-start gap-2.5">
+            <div className="w-7 h-7 rounded-[8px] flex items-center justify-center bg-rose-500/10 text-rose-500">
+              <AlertTriangle className="w-3.5 h-3.5" />
+            </div>
+            <div>
+              <h2 className="text-[14px] font-semibold text-rose-500">Danger Zone</h2>
+              <p className="text-[12px] mt-0.5" style={{ color: 'var(--foreground-muted)' }}>
+                Permanently delete this organization and all of its leads, discussions, activity, staff profiles, and settings.
+              </p>
+            </div>
+          </div>
+
+          {!showDeleteConfirmation ? (
+            <button
+              type="button"
+              onClick={() => { setShowDeleteConfirmation(true); setDeleteError(''); }}
+              className="px-3 py-2 rounded-lg text-xs font-semibold text-rose-600 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 transition-colors"
+            >
+              Delete Organization Permanently
+            </button>
+          ) : (
+            <div className="space-y-3 rounded-lg p-3 bg-rose-500/5 border border-rose-500/20">
+              <p className="text-xs" style={{ color: 'var(--foreground-secondary)' }}>
+                This cannot be undone. Type <strong style={{ color: 'var(--foreground)' }}>{organization.name}</strong> to confirm.
+              </p>
+              <input
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                placeholder="Type organization name"
+                disabled={isDeleting}
+                className={inputClass}
+                style={inputStyle}
+              />
+              {deleteError && <p className="text-xs text-rose-500">{deleteError}</p>}
+              <div className="flex gap-2">
+                <button type="button" onClick={() => { setShowDeleteConfirmation(false); setDeleteConfirmation(''); }} disabled={isDeleting} className="px-3 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: 'var(--surface-secondary)', color: 'var(--foreground)' }}>
+                  Cancel
+                </button>
+                <button type="button" onClick={handleDeleteOrganization} disabled={isDeleting || !deleteConfirmation.trim()} className="px-3 py-2 rounded-lg text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50">
+                  {isDeleting ? 'Deleting...' : 'Confirm Permanent Deletion'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
