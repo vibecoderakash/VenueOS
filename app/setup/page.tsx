@@ -26,7 +26,7 @@ export default function SetupPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [venueName, setVenueName] = useState('The Grand Imperial Banquet');
+  const [venueName, setVenueName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -184,6 +184,11 @@ export default function SetupPage() {
       return;
     }
 
+    if (!venueName.trim()) {
+      setErrorMsg('Please enter your banquet or venue name.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -194,7 +199,7 @@ export default function SetupPage() {
           full_name: fullName.trim(),
           email: email.trim().toLowerCase(),
           phone: phone.trim() || null,
-          venue_name: venueName.trim() || 'VenueOS Grand Hall',
+          venue_name: venueName.trim(),
           password,
         }),
       });
@@ -402,7 +407,7 @@ export default function SetupPage() {
             {/* Venue Name */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Banquet / Venue Name
+                Banquet / Venue Name <span className="text-rose-500">*</span>
               </label>
               <div className="relative flex items-center">
                 <div className="absolute left-3.5 text-slate-400 pointer-events-none">

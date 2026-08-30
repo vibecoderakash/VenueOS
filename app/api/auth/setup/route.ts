@@ -16,6 +16,10 @@ export async function POST(req: Request) {
 
     const { full_name, email, phone, password, venue_name } = body;
 
+    if (typeof venue_name !== 'string' || !venue_name.trim()) {
+      return NextResponse.json({ error: 'Banquet or venue name is required.' }, { status: 400 });
+    }
+
     // 1. Validation
     if (!full_name || typeof full_name !== 'string' || full_name.trim().length < 2) {
       return NextResponse.json({ error: SAFE_IDENTITY_ERRORS.INVALID_NAME }, { status: 400 });
@@ -81,7 +85,7 @@ export async function POST(req: Request) {
           name: cleanName,
           phone: cleanPhone,
           role: 'owner',
-          venue_name: venue_name || 'VenueOS Grand Hall',
+          venue_name: venue_name.trim(),
         },
       },
     });
@@ -122,7 +126,7 @@ export async function POST(req: Request) {
 
     const orgData = {
       id: 'org-' + (userId.slice(0, 8) || 'venue'),
-      name: typeof venue_name === 'string' && venue_name.trim() ? venue_name.trim() : 'The Grand Imperial Banquet',
+      name: venue_name.trim(),
       email: cleanEmail,
       phone: cleanPhone,
       address: '',
