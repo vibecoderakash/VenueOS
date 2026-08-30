@@ -72,16 +72,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Fallback mock / success response for client sync
-    const mockLead = {
-      id: `lead-${Date.now()}`,
-      organization_id: 'org-venue',
-      ...normalizedData,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    return NextResponse.json({ lead: mockLead, success: true }, { status: 201 });
+    return NextResponse.json(
+      { error: 'Unable to save lead to Supabase. Please verify your organization and profile setup.' },
+      { status: 503 }
+    );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error';
     return NextResponse.json({ error: message }, { status: 500 });

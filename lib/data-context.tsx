@@ -377,6 +377,22 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const createLead = async (input: CreateLeadInput): Promise<Lead> => {
     // Validate with strict schema
     const validated = createLeadSchema.parse(input);
+
+    // Persist new leads through the authenticated Supabase API.
+    const response = await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validated),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload.lead) {
+      throw new Error(payload.error || payload.message || 'Failed to create lead in Supabase');
+    }
+    const persistedLead = payload.lead as Lead;
+    setLeads((current) => [persistedLead, ...current]);
+    return persistedLead;
+
+    /*
     const nowIso = new Date().toISOString();
     const newLeadId = `lead-${Date.now()}`;
 
@@ -458,6 +474,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     });
 
     return newLead;
+    */
   };
 
   const updateLead = async (leadId: string, updates: Partial<Lead>): Promise<Lead> => {
