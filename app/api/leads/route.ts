@@ -38,9 +38,33 @@ export async function POST(req: NextRequest) {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('organization_id, is_active, active')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (profileError || !profile?.organization_id) {
+            return NextResponse.json(
+              { error: 'Your profile is not connected to an organization in Supabase.' },
+              { status: 403 }
+            );
+          }
+
+          const isActive = profile.is_active !== undefined
+            ? Boolean(profile.is_active)
+            : profile.active !== undefined
+              ? Boolean(profile.active)
+              : true;
+
+          if (!isActive) {
+            return NextResponse.json({ error: 'Your account is inactive.' }, { status: 403 });
+          }
+
           const { data: lead, error } = await supabase
             .from('leads')
             .insert({
+              organization_id: profile.organization_id,
               customer_name: normalizedData.customer_name,
               phone: normalizedData.phone,
               email: normalizedData.email || null,
@@ -67,8 +91,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ lead, success: true }, { status: 201 });
           }
         }
-      } catch {
-        // Fall through to mock lead return for development / demo mode
+      } catch (error) {
+        console.error('Supabase lead creation failed:', error);
       }
     }
 
