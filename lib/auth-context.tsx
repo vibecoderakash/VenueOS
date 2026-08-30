@@ -175,14 +175,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Process a session with strict state machine transitions
   const handleSession = useCallback(
-    async (session: Session | null) => {
+    async (session: Session | null): Promise<boolean> => {
       setAuthError(null);
 
       if (!session?.user) {
         setUser(null);
         setProfile(null);
         setAuthStatus('unauthenticated');
-        return;
+        return false;
       }
 
       try {
@@ -205,7 +205,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null);
           setAuthStatus('unauthenticated');
           setAuthError('Your account is not linked to an organization. Please contact an owner or complete setup.');
-          return;
+          return false;
         }
 
         if (dbProfile && !dbProfile.is_active) {
@@ -218,16 +218,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null);
           setAuthStatus('unauthenticated');
           setAuthError('Your account has been deactivated. Please contact your administrator.');
-          return;
+          return false;
         }
 
         setAuthStatus('authenticated');
+        return true;
       } catch (err) {
         console.error('Session processing error:', err);
         // If user session exists, authenticate with metadata profile rather than crashing
         setUser(session.user);
         setProfile(createProfileFromUser(session.user));
         setAuthStatus('authenticated');
+        return true;
       }
     },
     [createProfileFromUser, fetchProfile]
@@ -373,7 +375,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (data.user) {
-          await handleSession(data.session);
+          const hasOrganizationAccess = await handleSession(data.session);
+          if (!hasOrganizationAccess) {
+            return {
+              success: false,
+              error: 'Your account is not linked to an organization. Please complete setup before signing in.',
+            };
+          }
           return { success: true };
         }
 
