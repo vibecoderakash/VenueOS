@@ -646,7 +646,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                       className="absolute inset-y-0 left-2.5 flex items-center text-[12px] pointer-events-none"
                       style={{ color: 'var(--foreground-muted)' }}
                     >
-                      DD / MM / YYYY  ·  --:--
+                      DD / MM / YYYY  ·  HH : MM
                     </span>
                   )}
                 </div>
