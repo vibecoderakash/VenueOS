@@ -209,12 +209,6 @@ export default function SetupPage() {
 
       setSuccessMsg('Owner account created successfully! Signing you in...');
 
-      if (data.organization) {
-        try {
-          localStorage.setItem('venue_os_org_v1', JSON.stringify(data.organization));
-        } catch {}
-      }
-
       // Auto sign-in to establish authenticated session
       const signInResult = await signIn(email.trim().toLowerCase(), password);
 

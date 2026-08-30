@@ -173,42 +173,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [createProfileFromUser]
   );
 
-  // Sync organization info
-  const syncOrganizationDetails = (sessionUser: User) => {
-    try {
-      const meta = sessionUser.user_metadata || {};
-      const venueName = (meta.venue_name as string) || 'The Grand Imperial Banquet';
-      const ownerPhone = (meta.phone as string) || '';
-      const ownerEmail = (sessionUser.email || '').toLowerCase().trim();
-
-      const currentOrgStr = typeof window !== 'undefined' ? localStorage.getItem('venue_os_org_v1') : null;
-      let existingOrg: Record<string, unknown> = {};
-      if (currentOrgStr) {
-        try {
-          existingOrg = JSON.parse(currentOrgStr);
-        } catch {}
-      }
-
-      const updatedOrg = {
-        id: existingOrg.id || 'org-venue',
-        name: venueName,
-        email: ownerEmail,
-        phone: ownerPhone || existingOrg.phone || '',
-        currency: existingOrg.currency || 'INR',
-        address: existingOrg.address || '',
-        city: existingOrg.city || 'Patna',
-        created_at: existingOrg.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('venue_os_org_v1', JSON.stringify(updatedOrg));
-      }
-    } catch (e) {
-      console.warn('Organization sync note:', e);
-    }
-  };
-
   // Process a session with strict state machine transitions
   const handleSession = useCallback(
     async (session: Session | null) => {
@@ -223,8 +187,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         setUser(session.user);
-        syncOrganizationDetails(session.user);
-
         // Immediately set an initial profile from metadata to eliminate delay
         const initialProfile = createProfileFromUser(session.user);
         setProfile(initialProfile);
