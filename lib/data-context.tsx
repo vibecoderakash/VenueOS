@@ -303,9 +303,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const validated = createLeadSchema.parse(input);
 
     // Persist new leads through the authenticated Supabase API.
+    const supabase = createBrowserClient();
+    const session = supabase ? (await supabase.auth.getSession()).data.session : null;
     const response = await fetch('/api/leads', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
       body: JSON.stringify(validated),
     });
     const payload = await response.json().catch(() => ({}));
@@ -314,7 +319,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
     const persistedLead = payload.lead as Lead;
     setLeads((current) => [persistedLead, ...current]);
-    const supabase = createBrowserClient();
     if (supabase && organization.id && currentProfile.id) {
       const activityInsert = supabase.from('lead_activity').insert({
         organization_id: organization.id,
