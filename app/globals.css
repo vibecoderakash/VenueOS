@@ -12,6 +12,22 @@ input[type='number']::-webkit-outer-spin-button {
   margin: 0;
 }
 
+/* Make native date controls easy to discover and click. */
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  opacity: 1;
+  cursor: pointer;
+  filter: invert(67%) sepia(71%) saturate(1165%) hue-rotate(203deg) brightness(101%) contrast(101%);
+}
+
+input[type='date']::-webkit-calendar-picker-indicator:hover,
+input[type='datetime-local']::-webkit-calendar-picker-indicator:hover {
+  filter: invert(78%) sepia(46%) saturate(1225%) hue-rotate(202deg) brightness(103%) contrast(102%);
+}
+
 /* Keep native dropdown menus aligned with the active application theme. */
 select option {
   background-color: var(--surface);

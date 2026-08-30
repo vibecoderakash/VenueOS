@@ -402,7 +402,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                       type="date"
                       value={eventDate}
                       onChange={(e) => setEventDate(e.target.value)}
-                      className={inputClass}
+                      className={`${inputClass} pr-10`}
                       style={{ ...inputStyle, color: eventDate ? 'var(--foreground)' : 'transparent' }}
                       lang="en-GB"
                     />
@@ -634,7 +634,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                     type="datetime-local"
                     value={nextFollowUpAt}
                     onChange={(e) => setNextFollowUpAt(e.target.value)}
-                    className={inputClass}
+                    className={`${inputClass} pr-10`}
                     style={{
                       backgroundColor: 'var(--surface)',
                       border: '1px solid var(--border)',
