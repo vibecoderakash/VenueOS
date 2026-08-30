@@ -92,7 +92,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       ]);
       if (cancelled) return;
       if (orgResult.data) setOrganization(orgResult.data as Organization);
-      if (profilesResult.data) setProfiles(profilesResult.data as Profile[]);
+      if (profilesResult.data) {
+        setProfiles((profilesResult.data as Profile[]).filter((profile) => profile.is_active !== false && profile.active !== false));
+      }
       if (leadsResult.data) setLeads(leadsResult.data as Lead[]);
       if (discussionsResult.data) setDiscussions((discussionsResult.data as LeadDiscussion[]).reduce((all, item) => ({ ...all, [item.lead_id]: [...(all[item.lead_id] || []), item] }), {} as Record<string, LeadDiscussion[]>));
       if (activityResult.data) setActivity((activityResult.data as LeadActivity[]).reduce((all, item) => ({ ...all, [item.lead_id]: [...(all[item.lead_id] || []), item] }), {} as Record<string, LeadActivity[]>));
@@ -247,8 +249,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       ...updates,
       updated_at: new Date().toISOString(),
     };
-    saveOrganization(updated);
-    return updated;
+    const supabase = createBrowserClient();
+    if (!supabase || !organization.id) throw new Error('Organization is not connected to Supabase');
+    const { data, error } = await supabase
+      .from('organizations')
+      .update(updates)
+      .eq('id', organization.id)
+      .select()
+      .single();
+    if (error || !data) throw new Error(error?.message || 'Failed to update organization');
+    const persisted = data as Organization;
+    saveOrganization(persisted);
+    return persisted;
   };
 
   const updateProfiles = (newProfiles: Profile[]) => {
@@ -257,6 +269,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const saveLeads = (newLeads: Lead[]) => {
     setLeads(newLeads);
+    const supabase = createBrowserClient();
+    if (!supabase) return;
+    const previous = new Map(leads.map((lead) => [lead.id, lead]));
+    newLeads.forEach((lead) => {
+      const oldLead = previous.get(lead.id);
+      if (!oldLead || JSON.stringify(oldLead) === JSON.stringify(lead) || !lead.id) return;
+      const { owner, discussions: _discussions, activity: _activity, id: _id, organization_id: _organizationId, created_at: _createdAt, updated_at: _updatedAt, ...updates } = lead;
+      void supabase.from('leads').update(updates).eq('id', lead.id).then(({ error }) => {
+        if (error) console.error('Supabase lead update failed:', error.message);
+      });
+    });
   };
 
   const saveDiscussions = (newDiscussions: Record<string, LeadDiscussion[]>) => {
@@ -265,6 +288,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const saveActivity = (newActivity: Record<string, LeadActivity[]>) => {
     setActivity(newActivity);
+    const supabase = createBrowserClient();
+    if (!supabase) return;
+    const newLogs = Object.values(newActivity).flat().filter((log) => log.id && !log.id.startsWith('act-'));
+    if (newLogs.length) {
+      void supabase.from('lead_activity').upsert(newLogs.map(({ actor: _actor, ...log }) => log)).then(({ error }) => {
+        if (error) console.error('Supabase activity save failed:', error.message);
+      });
+    }
   };
 
   const currentProfile = useMemo(() => {
@@ -366,6 +397,28 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       metadata,
       created_at: new Date().toISOString(),
     };
+
+    const supabase = createBrowserClient();
+    if (supabase && organization.id && leadId) {
+      void supabase.from('lead_activity').insert({
+        organization_id: organization.id,
+        lead_id: leadId,
+        actor_id: currentProfile.id || null,
+        action_type: actionType,
+        metadata,
+      }).select().single().then(({ data, error }) => {
+        if (error) {
+          console.error('Supabase activity insert failed:', error.message);
+          return;
+        }
+        if (data) {
+          setActivity((current) => ({
+            ...current,
+            [leadId]: [(data as LeadActivity), ...(current[leadId] || []).filter((item) => item.id !== newLog.id)],
+          }));
+        }
+      });
+    }
 
     const currentLeadLogs = activity[leadId] || [];
     saveActivity({
@@ -507,6 +560,28 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const currentLead = leads.find((l) => l.id === leadId);
     if (!currentLead) throw new Error('Lead not found');
 
+    const supabase = createBrowserClient();
+    if (!supabase || !organization.id || !currentProfile.id) {
+      throw new Error('Supabase session is not ready');
+    }
+    const { data: persistedDiscussion, error } = await supabase
+      .from('lead_discussions')
+      .insert({
+        organization_id: organization.id,
+        lead_id: leadId,
+        author_id: currentProfile.id,
+        body: input.body.trim(),
+      })
+      .select()
+      .single();
+    if (error || !persistedDiscussion) {
+      throw new Error(error?.message || 'Failed to save discussion');
+    }
+    const discussion = persistedDiscussion as LeadDiscussion;
+    setDiscussions((current) => ({ ...current, [leadId]: [discussion, ...(current[leadId] || [])] }));
+    return discussion;
+
+    /*
     const newDisc: LeadDiscussion = {
       id: `disc-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       organization_id: organization.id,
@@ -557,10 +632,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
 
     return newDisc;
+    */
   };
 
   const deleteDiscussion = async (leadId: string, discussionId: string): Promise<void> => {
     const list = discussions[leadId] || [];
+    const supabase = createBrowserClient();
+    if (!supabase) throw new Error('Supabase session is not ready');
+    const { error } = await supabase.from('lead_discussions').delete().eq('id', discussionId).eq('lead_id', leadId);
+    if (error) throw new Error(error.message);
     const updated = list.filter((d) => d.id !== discussionId);
     saveDiscussions({
       ...discussions,
@@ -570,6 +650,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const editDiscussion = async (leadId: string, discussionId: string, newBody: string): Promise<void> => {
     const list = discussions[leadId] || [];
+    const supabase = createBrowserClient();
+    if (!supabase) throw new Error('Supabase session is not ready');
+    const { error } = await supabase
+      .from('lead_discussions')
+      .update({ body: newBody.trim(), updated_at: new Date().toISOString() })
+      .eq('id', discussionId)
+      .eq('lead_id', leadId);
+    if (error) throw new Error(error.message);
     const updated = list.map((d) =>
       d.id === discussionId ? { ...d, body: newBody.trim(), updated_at: new Date().toISOString() } : d
     );

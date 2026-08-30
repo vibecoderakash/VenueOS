@@ -39,6 +39,7 @@ export async function GET(req: Request) {
     const { data: members, error: membersError } = await supabase
       .from('profiles')
       .select('*')
+      .eq('organization_id', caller.profile.organization_id)
       .order('created_at', { ascending: true });
 
     if (membersError) {
