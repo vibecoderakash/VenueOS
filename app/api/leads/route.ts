@@ -41,6 +41,10 @@ export async function POST(req: NextRequest) {
           ? await supabase.auth.getUser(token)
           : await supabase.auth.getUser();
 
+        if (!user) {
+          return NextResponse.json({ error: 'Supabase session was not found by the server.' }, { status: 401 });
+        }
+
         if (user) {
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
@@ -94,6 +98,10 @@ export async function POST(req: NextRequest) {
           if (!error && lead) {
             return NextResponse.json({ lead, success: true }, { status: 201 });
           }
+          return NextResponse.json(
+            { error: error?.message || 'Supabase rejected the lead insert.', code: error?.code },
+            { status: 400 }
+          );
         }
       } catch (error) {
         console.error('Supabase lead creation failed:', error);
