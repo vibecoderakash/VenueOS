@@ -48,7 +48,6 @@ interface DataContextType {
   archiveLead: (leadId: string) => Promise<void>;
   restoreLead: (leadId: string) => Promise<void>;
   checkDuplicatePhone: (phone: string, excludeLeadId?: string) => Lead | null;
-  resetToDemoData: () => void;
   isLoading: boolean;
 }
 
@@ -105,134 +104,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, [authProfile, authIsAuthenticated]);
 
-  /*
-  useEffect(() => {
-    try {
-      const storedLeads = localStorage.getItem(STORAGE_KEYS.LEADS);
-      const storedDiscussions = localStorage.getItem(STORAGE_KEYS.DISCUSSIONS);
-      const storedActivity = localStorage.getItem(STORAGE_KEYS.ACTIVITY);
-      const storedUserId = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-      const storedOrg = localStorage.getItem(STORAGE_KEYS.ORGANIZATION);
-      const storedProfiles = localStorage.getItem(STORAGE_KEYS.PROFILES);
-
-      if (storedOrg) {
-        try {
-          const parsedOrg = JSON.parse(storedOrg);
-          if (parsedOrg && parsedOrg.name) {
-            setOrganization(parsedOrg);
-          }
-        } catch {}
-      }
-
-      if (storedProfiles) {
-        try {
-          const parsedProfiles = JSON.parse(storedProfiles);
-          if (Array.isArray(parsedProfiles) && parsedProfiles.length > 0) {
-            setProfiles(parsedProfiles);
-          }
-        } catch {}
-      }
-
-      // 1. Leads: Load only real user leads and remove all dummy/demo records
-      const mockLeadIds = new Set([
-        'lead-1', 'lead-2', 'lead-3', 'lead-4', 'lead-5', 'lead-6',
-        'lead-7', 'lead-8', 'lead-9', 'lead-10', 'lead-11', 'lead-12'
-      ]);
-
-      if (storedLeads) {
-        try {
-          const parsed = JSON.parse(storedLeads);
-          if (Array.isArray(parsed)) {
-            const realLeads = parsed.filter((l) => l && l.id && !mockLeadIds.has(l.id));
-            setLeads(realLeads);
-            localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(realLeads));
-          } else {
-            setLeads([]);
-            localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify([]));
-          }
-        } catch {
-          setLeads([]);
-          localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify([]));
-        }
-      } else {
-        setLeads([]);
-        localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify([]));
-      }
-
-      // 2. Discussions: Clean empty object (no demo discussions)
-      if (storedDiscussions) {
-        try {
-          const parsed = JSON.parse(storedDiscussions);
-          if (parsed && typeof parsed === 'object') {
-            const cleanedDiscussions: Record<string, LeadDiscussion[]> = {};
-            for (const [key, list] of Object.entries(parsed)) {
-              if (!mockLeadIds.has(key) && Array.isArray(list)) {
-                cleanedDiscussions[key] = (list as LeadDiscussion[]).filter(
-                  (d) => d && d.id && !d.id.startsWith('disc-')
-                );
-              }
-            }
-            setDiscussions(cleanedDiscussions);
-            localStorage.setItem(STORAGE_KEYS.DISCUSSIONS, JSON.stringify(cleanedDiscussions));
-          } else {
-            setDiscussions({});
-            localStorage.setItem(STORAGE_KEYS.DISCUSSIONS, JSON.stringify({}));
-          }
-        } catch {
-          setDiscussions({});
-          localStorage.setItem(STORAGE_KEYS.DISCUSSIONS, JSON.stringify({}));
-        }
-      } else {
-        setDiscussions({});
-        localStorage.setItem(STORAGE_KEYS.DISCUSSIONS, JSON.stringify({}));
-      }
-
-      // 3. Activity: Clean empty object (no demo activity trails)
-      if (storedActivity) {
-        try {
-          const parsed = JSON.parse(storedActivity);
-          if (parsed && typeof parsed === 'object') {
-            const cleanedActivity: Record<string, LeadActivity[]> = {};
-            for (const [key, list] of Object.entries(parsed)) {
-              if (!mockLeadIds.has(key) && Array.isArray(list)) {
-                cleanedActivity[key] = (list as LeadActivity[]).filter(
-                  (a) => a && a.id && !a.id.startsWith('act-')
-                );
-              }
-            }
-            setActivity(cleanedActivity);
-            localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify(cleanedActivity));
-          } else {
-            setActivity({});
-            localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify({}));
-          }
-        } catch {
-          setActivity({});
-          localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify({}));
-        }
-      } else {
-        setActivity({});
-        localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify({}));
-      }
-
-      const storedAuth = localStorage.getItem(STORAGE_KEYS.AUTH_SESSION);
-      if (storedAuth === 'true') {
-        setIsAuthenticated(true);
-        if (storedUserId && mockProfiles.some((p) => p.id === storedUserId)) {
-          setCurrentProfileIdState(storedUserId);
-        }
-      } else {
-        setIsAuthenticated(false);
-      }
-    } catch {
-      setLeads([]);
-      setDiscussions({});
-      setActivity({});
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-  */
 
   // Sync state helpers to localStorage
   const saveOrganization = (newOrg: Organization) => {
@@ -836,12 +707,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     logActivity(leadId, 'restored', { details: 'Lead restored from archive' });
   };
 
-  const resetToDemoData = () => {
-    setLeads([]);
-    setDiscussions({});
-    setActivity({});
-  };
-
   // Calculate high-precision dashboard metrics
   const metrics = useMemo<DashboardMetrics>(() => {
     const activeLeads = leads.filter((l) => !l.archived_at);
@@ -910,7 +775,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     archiveLead,
     restoreLead,
     checkDuplicatePhone,
-    resetToDemoData,
     isLoading,
   }), [
     organization,
@@ -940,7 +804,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     archiveLead,
     restoreLead,
     checkDuplicatePhone,
-    resetToDemoData,
     isLoading,
   ]);
 

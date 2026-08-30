@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import {
   Plus,
   Search,
-  RotateCcw,
   Calendar,
   AlertCircle,
   Sun,
@@ -24,7 +23,7 @@ import { cn } from '@/lib/utils';
 
 export function Header() {
   const router = useRouter();
-  const { metrics, resetToDemoData } = useData();
+  const { metrics } = useData();
   const { theme, setTheme } = useTheme();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
@@ -38,12 +37,6 @@ export function Header() {
     if (globalSearch.trim()) {
       router.push(`/leads?search=${encodeURIComponent(globalSearch.trim())}`);
       setGlobalSearch('');
-    }
-  };
-
-  const handleReset = () => {
-    if (confirm('Reset all banquet leads & discussions to demo data?')) {
-      resetToDemoData();
     }
   };
 
@@ -190,20 +183,6 @@ export function Header() {
               </>
             )}
           </div>
-
-          {/* Reset Demo Data */}
-          <button
-            onClick={handleReset}
-            className="w-8 h-8 flex items-center justify-center rounded-[8px] transition-colors"
-            style={{
-              color: 'var(--foreground-muted)',
-              border: '1px solid var(--border)',
-              backgroundColor: 'transparent',
-            }}
-            title="Reset to demo data"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
 
           {/* New Lead — Primary CTA */}
           <button
