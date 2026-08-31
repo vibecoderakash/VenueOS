@@ -112,7 +112,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [authProfile, authIsAuthenticated]);
 
 
-  // Sync state helpers to localStorage
+  // In-memory UI state helpers. Supabase is the only business-data store.
   const saveOrganization = (newOrg: Organization) => {
     setOrganization(newOrg);
   };
@@ -168,14 +168,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const saveActivity = (newActivity: Record<string, LeadActivity[]>) => {
     setActivity(newActivity);
-    const supabase = createBrowserClient();
-    if (!supabase) return;
-    const newLogs = Object.values(newActivity).flat().filter((log) => log.id && !log.id.startsWith('act-'));
-    if (newLogs.length) {
-      void supabase.from('lead_activity').upsert(newLogs.map(({ actor: _actor, ...log }) => log)).then(({ error }) => {
-        if (error) console.error('Supabase activity save failed:', error.message);
-      });
-    }
   };
 
   const currentProfile = useMemo(() => {
