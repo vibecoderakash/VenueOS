@@ -554,7 +554,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                 className="block text-[12px] font-medium mb-1"
                 style={{ color: 'var(--foreground-secondary)' }}
               >
-                Lead Source
+                Lead Source <span style={{ color: 'var(--danger)' }}>*</span>
               </label>
               <select
                 value={source}
