@@ -241,6 +241,8 @@ After valid Auth credentials are accepted, an account without a matching active 
 
 After valid credentials are accepted, an inactive account enters read-only mode and sees an inactive warning: “Your account is inactive. Please contact your administrator or venue owner to activate your account.” It may view permitted dashboard data but cannot create, edit, delete, assign, archive, restore, or otherwise mutate business data until reactivated.
 
+The inactive warning uses the red danger visual treatment so it is clearly distinguished from normal information notices.
+
 When the server-side Auth diagnostic is configured, an email that is not registered receives: “No account exists with this email. Please contact your venue administrator.” If the diagnostic is unavailable, the application falls back to the generic credential error.
 
 Inactive users are intended to sign in and view permitted dashboard data, while all business mutations are blocked in both the UI and backend/database policies. The application session behavior must remain aligned with this rule; it must not silently grant mutation access to an inactive account.
