@@ -8,7 +8,8 @@
 **Frontend:** Next.js (App Router, Tailwind CSS)  
 **Backend:** Supabase (PostgreSQL, Row-Level Security, Auth, RPCs)  
 **Local development:** `npm run dev`  
-**Local URL:** `http://localhost:3000`
+**Local URL:** `http://localhost:3000`  
+**GitHub Repository:** `https://github.com/vibecoderakash/VenueOS`
 
 ---
 
@@ -800,6 +801,14 @@ Do not casually undo established behavior such as themed selects, date inputs, s
 ## Rule 12 — Keep This PRD Current
 
 Whenever a feature becomes implemented, materially changes, or is removed, update this PRD so future AI sessions have an accurate baseline.
+
+## Rule 13 — GitHub Release & Push Protocol
+
+Whenever the user requests to push changes to GitHub:
+1. Ask the user for the release version or release tag (e.g. `v1.0.0`, `v1.0.1`, `v1.1.0`).
+2. Verify that `PRD.md` is fully updated with the latest architecture, features, and fixes.
+3. Commit all changes cleanly to Git with a descriptive message referencing the version.
+4. Execute the push to the official remote repository (`https://github.com/vibecoderakash/VenueOS`).
 
 ---
 
