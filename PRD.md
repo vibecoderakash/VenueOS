@@ -399,6 +399,12 @@ Activity records should identify:
 - relevant metadata
 - timestamp
 
+Lead audit entries also record field-level changes where applicable, including
+the field label, previous value, and new value. The UI displays the exact
+date/time alongside the relative time. Existing activity rows are never
+re-upserted when a new audit entry is created; each new entry is inserted once
+through the authenticated Supabase path so RLS remains effective.
+
 This creates a traceable history of important changes.
 
 ---
