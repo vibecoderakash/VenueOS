@@ -234,6 +234,8 @@ If the authenticated profile has no organization, the application must sign the 
 
 Auth users without a matching database profile are treated as invalid/orphaned accounts and must not receive dashboard access. The UI must show a useful setup/login message rather than silently using fallback profile or venue data.
 
+After valid Auth credentials are accepted, an account without a matching active venue/profile connection must receive the clear message: “This account is not connected to an active venue. Please contact your venue administrator.” Invalid credentials continue to use the generic credential error.
+
 Inactive users are intended to sign in and view permitted dashboard data, while all business mutations are blocked in both the UI and backend/database policies. The application session behavior must remain aligned with this rule; it must not silently grant mutation access to an inactive account.
 
 Production authentication errors should remain mostly generic to avoid unnecessarily revealing account existence.

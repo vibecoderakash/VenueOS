@@ -181,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null);
           setProfile(null);
           setAuthStatus('unauthenticated');
-          setAuthError('Your account is not linked to an organization. Please contact an owner or complete setup.');
+          setAuthError('This account is not connected to an active venue. Please contact your venue administrator.');
           return false;
         }
 
@@ -367,7 +367,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (!hasOrganizationAccess) {
             return {
               success: false,
-              error: 'Your account is not linked to an organization. Please complete setup before signing in.',
+              error: 'This account is not connected to an active venue. Please contact your venue administrator.',
             };
           }
           return { success: true };
