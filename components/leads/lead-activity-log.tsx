@@ -27,6 +27,8 @@ export function LeadActivityLog({ leadId }: LeadActivityLogProps) {
       case 'lead_created':
         return { icon: Sparkles, color: 'var(--primary)', bg: 'var(--primary-soft)' };
       case 'discussion_added':
+      case 'discussion_edited':
+      case 'discussion_deleted':
         return { icon: MessageSquare, color: 'var(--warning)', bg: 'var(--warning-soft)' };
       case 'status_changed':
         return { icon: Tag, color: 'var(--primary)', bg: 'var(--primary-soft)' };
@@ -36,6 +38,7 @@ export function LeadActivityLog({ leadId }: LeadActivityLogProps) {
         return { icon: UserCheck, color: 'var(--success)', bg: 'var(--success-soft)' };
       case 'archived':
       case 'restored':
+      case 'lead_deleted':
         return { icon: Archive, color: 'var(--foreground-muted)', bg: 'var(--surface-secondary)' };
       default:
         return { icon: Activity, color: 'var(--foreground-muted)', bg: 'var(--surface-secondary)' };
@@ -113,20 +116,28 @@ export function LeadActivityLog({ leadId }: LeadActivityLogProps) {
                   >
                     {act.actor?.name || 'User'}
                   </span>
-                  <span
-                    className="text-[11px]"
-                    style={{ color: 'var(--foreground-muted)' }}
-                    title={formatDateTime(act.created_at)}
-                  >
-                    {formatRelativeTime(act.created_at)}
+                  <span className="text-[11px] text-right" style={{ color: 'var(--foreground-muted)' }}>
+                    <span className="block">{formatDateTime(act.created_at)}</span>
+                    <span className="block">{formatRelativeTime(act.created_at)}</span>
                   </span>
                 </div>
-                <p
-                  className="text-[12px] mt-0.5"
-                  style={{ color: 'var(--foreground-secondary)' }}
-                >
+                <p className="text-[12px] mt-0.5" style={{ color: 'var(--foreground-secondary)' }}>
                   {act.metadata?.details || act.action_type.replace('_', ' ')}
                 </p>
+                {Array.isArray(act.metadata?.changes) && act.metadata.changes.length > 0 && (
+                  <div className="mt-1 space-y-0.5 text-[11px]" style={{ color: 'var(--foreground-muted)' }}>
+                    {act.metadata.changes.map((change, index) => {
+                      if (!change || typeof change !== 'object') return null;
+                      const item = change as { label?: string; from?: unknown; to?: unknown };
+                      return (
+                        <div key={`${act.id}-change-${index}`}>
+                          <span className="font-semibold">{item.label || 'Field'}:</span>{' '}
+                          {String(item.from ?? 'Empty')} → {String(item.to ?? 'Empty')}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           );

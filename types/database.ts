@@ -127,7 +127,10 @@ export type LeadActionType =
   | 'discussion_added'
   | 'archived'
   | 'restored'
-  | 'details_updated';
+  | 'details_updated'
+  | 'discussion_edited'
+  | 'discussion_deleted'
+  | 'lead_deleted';
 
 export interface LeadActivity {
   id: string;

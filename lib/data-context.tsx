@@ -307,6 +307,44 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const formatAuditValue = (value: unknown): string => {
+    if (value === null || value === undefined || value === '') return 'Empty';
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    return String(value);
+  };
+
+  const leadFieldLabels: Partial<Record<keyof Lead, string>> = {
+    customer_name: 'Customer name',
+    phone: 'Phone number',
+    email: 'Email',
+    source: 'Lead source',
+    event_type: 'Event type',
+    event_date_status: 'Event date status',
+    event_date: 'Event date',
+    guest_count_status: 'Guest count status',
+    guest_count: 'Guest count',
+    budget: 'Budget',
+    requirement: 'Requirement notes',
+    owner_id: 'Sales owner',
+    status: 'Status',
+    priority: 'Priority',
+    next_follow_up_at: 'Follow-up date/time',
+    follow_up_note: 'Action note',
+    archived_at: 'Archive status',
+  };
+
+  const getLeadChanges = (before: Lead, after: Lead) => {
+    const fields = Object.keys(leadFieldLabels) as Array<keyof Lead>;
+    return fields
+      .filter((field) => String(before[field] ?? '') !== String(after[field] ?? ''))
+      .map((field) => ({
+        field,
+        label: leadFieldLabels[field] || field,
+        from: formatAuditValue(before[field]),
+        to: formatAuditValue(after[field]),
+      }));
+  };
+
   const createLead = async (input: CreateLeadInput): Promise<Lead> => {
     assertCanMutate();
     // Validate with strict schema
@@ -462,10 +500,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       updated_at: new Date().toISOString(),
     };
 
+    const changes = getLeadChanges(current, updated);
+    if (changes.length === 0) return current;
+
     const updatedList = leads.map((l) => (l.id === leadId ? updated : l));
     saveLeads(updatedList);
 
-    logActivity(leadId, 'details_updated', { details: 'Lead banquet inquiry details updated' });
+    logActivity(leadId, 'details_updated', {
+      details: 'Lead details updated',
+      changes,
+    });
     return updated;
   };
 
@@ -494,6 +538,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
     const discussion = persistedDiscussion as LeadDiscussion;
     setDiscussions((current) => ({ ...current, [leadId]: [discussion, ...(current[leadId] || [])] }));
+    logActivity(leadId, 'discussion_added', {
+      details: `Discussion note added: ${input.body.trim().slice(0, 120)}${input.body.trim().length > 120 ? '...' : ''}`,
+      changes: [{ field: 'discussion_note', label: 'Discussion note', from: 'Empty', to: 'New note added' }],
+    });
     return discussion;
 
     /*
@@ -562,6 +610,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       ...discussions,
       [leadId]: updated,
     });
+    logActivity(leadId, 'discussion_deleted', {
+      details: 'Discussion note deleted',
+      changes: [{ field: 'discussion_note', label: 'Discussion note', from: 'Saved note', to: 'Deleted' }],
+    });
   };
 
   const editDiscussion = async (leadId: string, discussionId: string, newBody: string): Promise<void> => {
@@ -581,6 +633,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     saveDiscussions({
       ...discussions,
       [leadId]: updated,
+    });
+    logActivity(leadId, 'discussion_edited', {
+      details: 'Discussion note edited',
+      changes: [{ field: 'discussion_note', label: 'Discussion note', from: 'Previous text', to: 'Updated text' }],
     });
   };
 
@@ -605,10 +661,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     );
     saveLeads(updatedList);
 
+    const previousNote = current.follow_up_note || null;
+    const nextNote = note !== undefined ? note : previousNote;
     logActivity(leadId, 'follow_up_updated', {
       details: nextFollowUpAt
-        ? `Next follow-up scheduled for ${new Date(nextFollowUpAt).toLocaleString()}`
+        ? `Follow-up date/time: ${new Date(nextFollowUpAt).toLocaleString()}; Action note: ${nextNote || 'Empty'}`
         : 'Follow-up cleared',
+      changes: [
+        { field: 'next_follow_up_at', label: 'Follow-up date/time', from: formatAuditValue(current.next_follow_up_at), to: formatAuditValue(nextFollowUpAt) },
+        { field: 'follow_up_note', label: 'Action note', from: formatAuditValue(previousNote), to: formatAuditValue(nextNote) },
+      ],
     });
   };
 
@@ -693,7 +755,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     logActivity(leadId, 'lead_reassigned', {
       assigned_from: current.owner_id,
       assigned_to: ownerId,
-      details: `Lead assigned to ${ownerName}`,
+      details: `Sales owner changed to ${ownerName}`,
+      changes: [{
+        field: 'owner_id',
+        label: 'Sales owner',
+        from: profiles.find((p) => p.id === current.owner_id)?.name || 'Unassigned',
+        to: ownerName,
+      }],
     });
   };
 
@@ -711,7 +779,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     );
     saveLeads(updatedList);
 
-    logActivity(leadId, 'archived', { details: 'Lead archived' });
+    logActivity(leadId, 'archived', {
+      details: 'Lead archive status changed',
+      changes: [{ field: 'archived_at', label: 'Archive status', from: 'Active', to: 'Archived' }],
+    });
   };
 
   const restoreLead = async (leadId: string): Promise<void> => {
@@ -728,7 +799,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     );
     saveLeads(updatedList);
 
-    logActivity(leadId, 'restored', { details: 'Lead restored from archive' });
+    logActivity(leadId, 'restored', {
+      details: 'Lead archive status changed',
+      changes: [{ field: 'archived_at', label: 'Archive status', from: 'Archived', to: 'Active' }],
+    });
   };
 
   const deleteLead = async (leadId: string): Promise<void> => {
