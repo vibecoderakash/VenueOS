@@ -45,6 +45,25 @@ export type BanquetEventType =
 export type EventDateStatus = 'fixed' | 'not_fixed';
 export type GuestCountStatus = 'fixed' | 'not_fixed';
 
+export type BanquetLossReason =
+  | 'Budget Issue'
+  | 'Date Unavailable'
+  | 'Booked Competitor'
+  | 'Cancelled Plan'
+  | 'Unresponsive / Cold'
+  | 'Other';
+
+export const BANQUET_POPULAR_TAGS = [
+  'VIP Client',
+  'High Budget',
+  'Lawn Preference',
+  'Pure Veg',
+  'Grand Ballroom',
+  'AC Hall Required',
+  'DJ & Stage Setup',
+  'Rooms Required',
+] as const;
+
 export interface Organization {
   id: string;
   name: string;
@@ -92,6 +111,9 @@ export interface Lead {
   owner_id?: string | null;
   status: LeadStatus;
   priority: LeadPriority;
+  tags?: string[];
+  lost_reason?: BanquetLossReason | string | null;
+  lost_reason_details?: string | null;
   next_follow_up_at?: string | null;
   follow_up_note?: string | null;
   archived_at?: string | null;
@@ -173,6 +195,8 @@ export interface LeadFilterCriteria {
   ownerId: string | 'All';
   source: LeadSource | 'All';
   eventType: BanquetEventType | 'All';
+  tag?: string | 'All';
+  lossReason?: string | 'All';
   followUpState: 'All' | 'Overdue' | 'Today' | 'Upcoming' | 'None';
   showArchived: boolean;
   sortBy: 'created_at' | 'event_date' | 'next_follow_up_at' | 'customer_name' | 'priority';

@@ -63,6 +63,15 @@ export const leadPriorities: [LeadPriority, ...LeadPriority[]] = ['High', 'Mediu
 export const eventDateStatuses: [EventDateStatus, ...EventDateStatus[]] = ['fixed', 'not_fixed'];
 export const guestCountStatuses: [GuestCountStatus, ...GuestCountStatus[]] = ['fixed', 'not_fixed'];
 
+export const banquetLossReasons = [
+  'Budget Issue',
+  'Date Unavailable',
+  'Booked Competitor',
+  'Cancelled Plan',
+  'Unresponsive / Cold',
+  'Other',
+] as const;
+
 // Base lead validation object before refinement
 const rawCreateLeadSchema = z.object({
   customer_name: z
@@ -117,6 +126,9 @@ const rawCreateLeadSchema = z.object({
   owner_id: z.string().optional().nullable(),
   priority: z.enum(leadPriorities).default('Medium'),
   status: z.enum(leadStatuses).default('New'),
+  tags: z.array(z.string().trim()).optional().default([]),
+  lost_reason: z.string().max(100).optional().nullable(),
+  lost_reason_details: z.string().max(500).optional().nullable(),
   next_follow_up_at: z.string().optional().nullable().or(z.literal('')),
   follow_up_note: z.string().max(500, 'Follow-up note cannot exceed 500 characters.').optional().nullable().or(z.literal('')),
   initial_discussion: z.string().max(1000, 'Initial discussion cannot exceed 1000 characters.').optional().nullable().or(z.literal('')),

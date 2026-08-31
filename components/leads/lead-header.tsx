@@ -22,6 +22,7 @@ import {
 } from '@/lib/utils';
 import { useData } from '@/lib/data-context';
 import confetti from 'canvas-confetti';
+import { LossReasonModal } from './loss-reason-modal';
 
 interface LeadHeaderProps {
   lead: Lead;
@@ -43,6 +44,7 @@ export function LeadHeader({ lead }: LeadHeaderProps) {
   const [deleteConfirmation, setDeleteConfirmation] = React.useState('');
   const [deleteError, setDeleteError] = React.useState('');
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [lossModalOpen, setLossModalOpen] = React.useState(false);
 
   if (!currentProfile) return null;
 
@@ -63,6 +65,10 @@ export function LeadHeader({ lead }: LeadHeaderProps) {
   };
 
   const handleStatusChange = async (newStatus: LeadStatus) => {
+    if (newStatus === 'Lost') {
+      setLossModalOpen(true);
+      return;
+    }
     if (newStatus === 'Converted') {
       confetti({ particleCount: 70, spread: 50, origin: { y: 0.6 } });
     }
@@ -233,6 +239,26 @@ export function LeadHeader({ lead }: LeadHeaderProps) {
               {sourceBadge.label}
             </span>
 
+            {/* Loss reason badge */}
+            {lead.status === 'Lost' && lead.lost_reason && (
+              <span
+                className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border bg-rose-500/10 text-rose-500 border-rose-500/30 flex items-center gap-1"
+                title={lead.lost_reason_details || undefined}
+              >
+                <span>❌ Lost: {lead.lost_reason}</span>
+              </span>
+            )}
+
+            {/* Custom Tags */}
+            {lead.tags && lead.tags.length > 0 && lead.tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-md border bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border-indigo-500/20"
+              >
+                {tag}
+              </span>
+            ))}
+
             {isArchived && (
               <span
                 className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
@@ -298,6 +324,16 @@ export function LeadHeader({ lead }: LeadHeaderProps) {
           </a>
         </div>
       </div>
+
+      {/* Loss Reason Capture Modal */}
+      <LossReasonModal
+        lead={lead}
+        isOpen={lossModalOpen}
+        onClose={() => setLossModalOpen(false)}
+        onConfirm={async (reason, details) => {
+          await updateStatus(lead.id, 'Lost', reason, details);
+        }}
+      />
     </div>
   );
 }

@@ -10,9 +10,12 @@ import {
   Edit3, 
   Check, 
   X,
-  AlertCircle
+  AlertCircle,
+  Tag,
+  Plus,
+  AlertTriangle
 } from 'lucide-react';
-import { Lead, BanquetEventType, EventDateStatus, GuestCountStatus } from '@/types/database';
+import { Lead, BanquetEventType, EventDateStatus, GuestCountStatus, BANQUET_POPULAR_TAGS } from '@/types/database';
 import { formatDate, formatCurrency, getEventTypeBadge } from '@/lib/utils';
 import { useData } from '@/lib/data-context';
 import { banquetEventTypes } from '@/lib/validations/lead';
@@ -37,6 +40,8 @@ export function EventContextCard({ lead }: EventContextCardProps) {
   const [guestCount, setGuestCount] = useState(lead.guest_count?.toString() || '');
   const [budget, setBudget] = useState(lead.budget?.toString() || '');
   const [requirement, setRequirement] = useState(lead.requirement || '');
+  const [customTagInput, setCustomTagInput] = useState('');
+  const [isAddingTag, setIsAddingTag] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
   const eventBadge = getEventTypeBadge(lead.event_type);
@@ -102,6 +107,38 @@ export function EventContextCard({ lead }: EventContextCardProps) {
       } else {
         setEditError('Failed to update lead details.');
       }
+    }
+  };
+
+  const handleToggleTag = async (tagToToggle: string) => {
+    const currentTags = lead.tags || [];
+    const newTags = currentTags.includes(tagToToggle)
+      ? currentTags.filter((t) => t !== tagToToggle)
+      : [...currentTags, tagToToggle];
+    try {
+      await updateLead(lead.id, { tags: newTags });
+    } catch (err) {
+      console.error('Failed to update tags:', err);
+    }
+  };
+
+  const handleAddCustomTag = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const tag = customTagInput.trim();
+    if (!tag) return;
+    const currentTags = lead.tags || [];
+    if (!currentTags.includes(tag)) {
+      const newTags = [...currentTags, tag];
+      try {
+        await updateLead(lead.id, { tags: newTags });
+        setCustomTagInput('');
+        setIsAddingTag(false);
+      } catch (err) {
+        console.error('Failed to add custom tag:', err);
+      }
+    } else {
+      setCustomTagInput('');
+      setIsAddingTag(false);
     }
   };
 
@@ -322,6 +359,30 @@ export function EventContextCard({ lead }: EventContextCardProps) {
             </div>
           ) : null}
 
+          {/* Loss Reason Notice (if lead is Lost) */}
+          {lead.status === 'Lost' && (
+            <div
+              className="p-3 rounded-[10px] space-y-1.5 transition-colors border"
+              style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                borderColor: 'rgba(239, 68, 68, 0.25)',
+              }}
+            >
+              <div className="flex items-center gap-1.5 text-rose-500 font-bold text-[12px]">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>Inquiry Marked as Lost</span>
+              </div>
+              <p className="text-[12px] font-semibold text-foreground">
+                Reason: <span className="text-rose-600 dark:text-rose-400">{lead.lost_reason || 'Reason not specified'}</span>
+              </p>
+              {lead.lost_reason_details && (
+                <p className="text-[11px] text-foreground-secondary italic">
+                  &ldquo;{lead.lost_reason_details}&rdquo;
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Customer Requirement Notes */}
           <div
             className="p-3 rounded-[8px] space-y-1 transition-colors"
@@ -343,6 +404,117 @@ export function EventContextCard({ lead }: EventContextCardProps) {
             >
               {lead.requirement || 'No specific requirements recorded.'}
             </p>
+          </div>
+
+          {/* Banquet Custom Tags Section */}
+          <div
+            className="p-3 rounded-[10px] space-y-2.5 transition-colors"
+            style={{
+              backgroundColor: 'var(--surface-secondary)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <p
+                className="text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1"
+                style={{ color: 'var(--foreground-muted)' }}
+              >
+                <Tag className="w-3 h-3 text-indigo-500" />
+                <span>Lead Tags ({lead.tags?.length || 0})</span>
+              </p>
+              {!isAddingTag && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddingTag(true)}
+                  className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Add Tag</span>
+                </button>
+              )}
+            </div>
+
+            {/* Active Tags Chips */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {lead.tags && lead.tags.length > 0 ? (
+                lead.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 group"
+                  >
+                    <span>{tag}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleTag(tag)}
+                      className="text-indigo-400 hover:text-rose-500 transition-colors ml-0.5 cursor-pointer"
+                      title={`Remove tag ${tag}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))
+              ) : (
+                <span className="text-[11px] text-foreground-muted italic">
+                  No tags added yet. Click suggestions below or add custom tags.
+                </span>
+              )}
+            </div>
+
+            {/* Custom Tag Input Form */}
+            {isAddingTag && (
+              <form onSubmit={handleAddCustomTag} className="flex items-center gap-1.5 pt-1">
+                <input
+                  type="text"
+                  placeholder="e.g. VIP Client, Lawn Preference..."
+                  value={customTagInput}
+                  onChange={(e) => setCustomTagInput(e.target.value)}
+                  autoFocus
+                  className="flex-1 rounded-lg px-2.5 py-1 text-[12px] bg-surface border border-border text-foreground focus:outline-none focus:border-primary"
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1 rounded-lg bg-primary text-primary-fg text-[11px] font-semibold hover:opacity-90 cursor-pointer"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingTag(false);
+                    setCustomTagInput('');
+                  }}
+                  className="px-2 py-1 rounded-lg border border-border text-foreground-muted text-[11px] hover:text-foreground cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
+
+            {/* Popular Banquet Suggestions */}
+            <div className="pt-1.5 border-t border-border/50">
+              <p className="text-[10px] font-semibold text-foreground-muted uppercase tracking-wider mb-1.5">
+                Popular Banquet Tags
+              </p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {BANQUET_POPULAR_TAGS.map((popTag) => {
+                  const isSelected = lead.tags?.includes(popTag);
+                  return (
+                    <button
+                      key={popTag}
+                      type="button"
+                      onClick={() => handleToggleTag(popTag)}
+                      className={`text-[10px] font-medium px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border-indigo-500/40 font-semibold'
+                          : 'bg-surface text-foreground-secondary border-border hover:border-border-hover'
+                      }`}
+                    >
+                      {isSelected ? `✓ ${popTag}` : `+ ${popTag}`}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       ) : (

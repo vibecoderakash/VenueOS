@@ -162,6 +162,46 @@ async function runTests() {
   });
   assert('TEST 14: Edit lead Not Fixed -> Fixed requires valid date (empty date rejected)', !test14.success);
 
+  // TEST 15: Lead with custom tags is accepted
+  const test15 = createLeadSchema.safeParse({
+    ...validBase,
+    tags: ['VIP Client', 'Pure Veg', 'Lawn Preference'],
+  });
+  assert('TEST 15: Lead with custom tags (VIP Client, Pure Veg, Lawn Preference) is accepted', test15.success && test15.data.tags.length === 3);
+
+  // TEST 16: Lead marked as Lost with Budget Issue loss reason is accepted
+  const test16 = createLeadSchema.safeParse({
+    ...validBase,
+    status: 'Lost',
+    lost_reason: 'Budget Issue',
+    lost_reason_details: 'Quoted 2000/plate, client wanted 1500/plate',
+  });
+  assert('TEST 16: Lead marked as Lost with Budget Issue is accepted', test16.success && test16.data.lost_reason === 'Budget Issue');
+
+  // TEST 17: Lead marked as Lost with Date Unavailable is accepted
+  const test17 = createLeadSchema.safeParse({
+    ...validBase,
+    status: 'Lost',
+    lost_reason: 'Date Unavailable',
+  });
+  assert('TEST 17: Lead marked as Lost with Date Unavailable is accepted', test17.success && test17.data.lost_reason === 'Date Unavailable');
+
+  // TEST 18: Lead marked as Lost with Booked Competitor is accepted
+  const test18 = createLeadSchema.safeParse({
+    ...validBase,
+    status: 'Lost',
+    lost_reason: 'Booked Competitor',
+  });
+  assert('TEST 18: Lead marked as Lost with Booked Competitor is accepted', test18.success && test18.data.lost_reason === 'Booked Competitor');
+
+  // TEST 19: Lead marked as Lost with Cancelled Plan is accepted
+  const test19 = createLeadSchema.safeParse({
+    ...validBase,
+    status: 'Lost',
+    lost_reason: 'Cancelled Plan',
+  });
+  assert('TEST 19: Lead marked as Lost with Cancelled Plan is accepted', test19.success && test19.data.lost_reason === 'Cancelled Plan');
+
   // TEST API ENDPOINT: Direct HTTP test against /api/leads
   console.log('\n--- Testing API Route directly ---');
   try {

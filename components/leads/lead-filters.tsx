@@ -9,7 +9,8 @@ import {
   Tag
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
-import { LeadFilterCriteria, LeadStatus, LeadPriority, BanquetEventType, LeadSource } from '@/types/database';
+import { LeadFilterCriteria, LeadStatus, LeadPriority, BanquetEventType, LeadSource, BANQUET_POPULAR_TAGS } from '@/types/database';
+import { banquetLossReasons } from '@/lib/validations/lead';
 import { cn } from '@/lib/utils';
 
 interface LeadFiltersProps {
@@ -31,6 +32,8 @@ export function LeadFilters({ filters, onFilterChange, onReset }: LeadFiltersPro
     filters.ownerId !== 'All' ||
     filters.source !== 'All' ||
     filters.eventType !== 'All' ||
+    (filters.tag && filters.tag !== 'All') ||
+    (filters.lossReason && filters.lossReason !== 'All') ||
     filters.followUpState !== 'All' ||
     filters.showArchived;
 
@@ -258,6 +261,46 @@ export function LeadFilters({ filters, onFilterChange, onReset }: LeadFiltersPro
             <option value="not_provided">Not Provided</option>
           </select>
         </div>
+
+        {/* Tag filter */}
+        <div>
+          <select
+            value={filters.tag || 'All'}
+            onChange={(e) => onFilterChange({ tag: e.target.value })}
+            className="w-full rounded-[6px] px-2 py-1.5 focus:outline-none cursor-pointer"
+            style={selectStyle}
+          >
+            <option value="All">All Tags</option>
+            {BANQUET_POPULAR_TAGS.map((tag) => (
+              <option key={tag} value={tag} style={{ backgroundColor: 'var(--surface)' }}>
+                {tag}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Loss Reason filter (shown if status is Lost or selected) */}
+        {(filters.status === 'Lost' || (filters.lossReason && filters.lossReason !== 'All')) && (
+          <div>
+            <select
+              value={filters.lossReason || 'All'}
+              onChange={(e) => onFilterChange({ lossReason: e.target.value })}
+              className="w-full rounded-[6px] px-2 py-1.5 focus:outline-none cursor-pointer text-rose-500 font-semibold"
+              style={{
+                ...selectStyle,
+                color: 'var(--danger)',
+                borderColor: 'var(--danger-border)',
+              }}
+            >
+              <option value="All">All Loss Reasons</option>
+              {banquetLossReasons.map((reason) => (
+                <option key={reason} value={reason} style={{ backgroundColor: 'var(--surface)', color: 'var(--foreground)' }}>
+                  {reason}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Archived Toggle & Reset */}
         <div className="flex items-center gap-2 col-span-2 sm:col-span-4 md:col-span-1 justify-between md:justify-end">

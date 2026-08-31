@@ -98,6 +98,9 @@ export async function POST(req: NextRequest) {
               owner_id: user.id,
               status: normalizedData.status || 'New',
               priority: normalizedData.priority || 'Medium',
+              tags: normalizedData.tags || [],
+              lost_reason: normalizedData.lost_reason || null,
+              lost_reason_details: normalizedData.lost_reason_details || null,
               next_follow_up_at: normalizedData.next_follow_up_at || null,
               follow_up_note: normalizedData.follow_up_note || null,
             })
@@ -158,6 +161,8 @@ export async function GET(req: NextRequest) {
   const ownerId = url.searchParams.get('ownerId');
   const source = url.searchParams.get('source');
   const eventType = url.searchParams.get('eventType');
+  const tag = url.searchParams.get('tag');
+  const lossReason = url.searchParams.get('lossReason');
   const followUp = url.searchParams.get('followUp');
   const archived = url.searchParams.get('archived') === 'true';
   const sortBy = ['created_at', 'event_date', 'next_follow_up_at', 'customer_name', 'priority'].includes(url.searchParams.get('sortBy') || '')
@@ -177,6 +182,8 @@ export async function GET(req: NextRequest) {
   if (ownerId && ownerId !== 'All') query = query.eq('owner_id', ownerId);
   if (source && source !== 'All') query = query.eq('source', source);
   if (eventType && eventType !== 'All') query = query.eq('event_type', eventType);
+  if (tag && tag !== 'All') query = query.contains('tags', [tag]);
+  if (lossReason && lossReason !== 'All') query = query.eq('lost_reason', lossReason);
   if (search) {
     const escaped = search.replace(/[%(),]/g, '');
     query = query.or(`customer_name.ilike.%${escaped}%,phone.ilike.%${escaped}%,requirement.ilike.%${escaped}%`);

@@ -43,7 +43,7 @@ interface DataContextType {
   deleteDiscussion: (leadId: string, discussionId: string) => Promise<void>;
   editDiscussion: (leadId: string, discussionId: string, newBody: string) => Promise<void>;
   updateFollowUp: (leadId: string, nextFollowUpAt: string | null, note?: string | null) => Promise<void>;
-  updateStatus: (leadId: string, newStatus: LeadStatus) => Promise<void>;
+  updateStatus: (leadId: string, newStatus: LeadStatus, lostReason?: string | null, lostReasonDetails?: string | null) => Promise<void>;
   updatePriority: (leadId: string, newPriority: LeadPriority) => Promise<void>;
   assignLead: (leadId: string, ownerId: string | null) => Promise<void>;
   archiveLead: (leadId: string) => Promise<void>;
@@ -674,27 +674,48 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const updateStatus = async (leadId: string, newStatus: LeadStatus): Promise<void> => {
+  const updateStatus = async (
+    leadId: string,
+    newStatus: LeadStatus,
+    lostReason?: string | null,
+    lostReasonDetails?: string | null
+  ): Promise<void> => {
     assertCanMutate();
     const current = leads.find((l) => l.id === leadId);
-    if (!current || current.status === newStatus) return;
+    if (!current) return;
 
     const oldStatus = current.status;
+    const isLost = newStatus === 'Lost';
+    const finalLostReason = isLost ? (lostReason || current.lost_reason || null) : null;
+    const finalLostReasonDetails = isLost ? (lostReasonDetails || current.lost_reason_details || null) : null;
+
+    if (oldStatus === newStatus && current.lost_reason === finalLostReason && current.lost_reason_details === finalLostReasonDetails) {
+      return;
+    }
+
     const updatedList = leads.map((l) =>
       l.id === leadId
         ? {
             ...l,
             status: newStatus,
+            lost_reason: finalLostReason,
+            lost_reason_details: finalLostReasonDetails,
             updated_at: new Date().toISOString(),
           }
         : l
     );
     saveLeads(updatedList);
 
+    const activityDetails = isLost && finalLostReason
+      ? `Status marked as Lost · Reason: ${finalLostReason}${finalLostReasonDetails ? ` (${finalLostReasonDetails})` : ''}`
+      : `Status updated to ${newStatus}`;
+
     logActivity(leadId, 'status_changed', {
       old_value: oldStatus,
       new_value: newStatus,
-      details: `Status updated to ${newStatus}`,
+      lost_reason: finalLostReason,
+      lost_reason_details: finalLostReasonDetails,
+      details: activityDetails,
     });
   };
 

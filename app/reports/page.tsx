@@ -7,10 +7,12 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   Flame, 
-  PieChart
+  PieChart,
+  Tag,
+  Ban
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
-import { LeadStatus, LeadSource } from '@/types/database';
+import { LeadStatus, LeadSource, BanquetLossReason } from '@/types/database';
 import { getStatusBadgeConfig, getSourceBadge } from '@/lib/utils';
 
 export default function ReportsPage() {
@@ -42,6 +44,50 @@ export default function ReportsPage() {
       };
     })
     .filter((s) => s.total > 0)
+    .sort((a, b) => b.total - a.total);
+
+  const lostLeads = leads.filter((l) => l.status === 'Lost');
+  const totalLost = lostLeads.length;
+
+  const lossReasons: BanquetLossReason[] = [
+    'Budget Issue',
+    'Date Unavailable',
+    'Booked Competitor',
+    'Cancelled Plan',
+    'Unresponsive / Cold',
+    'Other',
+  ];
+
+  const lossReasonStats = lossReasons
+    .map((reason) => {
+      const count = lostLeads.filter((l) => l.lost_reason === reason).length;
+      const percent = totalLost > 0 ? Math.round((count / totalLost) * 100) : 0;
+      return { reason, count, percent };
+    })
+    .filter((s) => s.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  const unclassifiedLost = lostLeads.filter((l) => !l.lost_reason).length;
+  if (unclassifiedLost > 0 && totalLost > 0) {
+    lossReasonStats.push({
+      reason: 'Not Specified' as BanquetLossReason,
+      count: unclassifiedLost,
+      percent: Math.round((unclassifiedLost / totalLost) * 100),
+    });
+  }
+
+  const allTags = Array.from(new Set(leads.flatMap((l) => l.tags || [])));
+  const tagStats = allTags
+    .map((tag) => {
+      const matchingLeads = leads.filter((l) => l.tags?.includes(tag));
+      const converted = matchingLeads.filter((l) => l.status === 'Converted').length;
+      return {
+        tag,
+        total: matchingLeads.length,
+        converted,
+        conversionRate: matchingLeads.length > 0 ? Math.round((converted / matchingLeads.length) * 100) : 0,
+      };
+    })
     .sort((a, b) => b.total - a.total);
 
   const ownerStats = profiles.map((p) => {
@@ -343,6 +389,134 @@ export default function ReportsPage() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Grid: Lost Inquiries Analysis & Custom Tag Performance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Lost Inquiries Analysis */}
+        <div
+          className="rounded-[12px] p-5 space-y-3.5 transition-colors"
+          style={{
+            backgroundColor: 'var(--surface)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-7 h-7 rounded-[8px] flex items-center justify-center text-rose-500 bg-rose-500/10"
+              >
+                <Ban className="w-3.5 h-3.5" />
+              </div>
+              <h3 className="text-[14px] font-bold text-foreground">
+                Lost Inquiries & Reasons ({totalLost})
+              </h3>
+            </div>
+            {totalLost > 0 && (
+              <span className="text-[11px] font-semibold text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
+                {Math.round((totalLost / (totalLeads || 1)) * 100)}% of total leads
+              </span>
+            )}
+          </div>
+
+          {lossReasonStats.length > 0 ? (
+            <div className="space-y-2">
+              {lossReasonStats.map(({ reason, count, percent }) => (
+                <div
+                  key={reason}
+                  className="p-3 rounded-xl border space-y-1.5 transition-colors"
+                  style={{
+                    backgroundColor: 'var(--surface-secondary)',
+                    borderColor: 'var(--border)',
+                  }}
+                >
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-foreground flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-500" />
+                      <span>{reason}</span>
+                    </span>
+                    <span className="text-rose-500 font-bold">
+                      {count} {count === 1 ? 'lead' : 'leads'} ({percent}%)
+                    </span>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="w-full bg-surface h-1.5 rounded-full overflow-hidden border border-border/40">
+                    <div
+                      className="bg-rose-500 h-full rounded-full transition-all duration-300"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-6 text-center text-xs text-foreground-muted italic">
+              No lost inquiries recorded. Keep up the high conversion momentum!
+            </div>
+          )}
+        </div>
+
+        {/* Custom Tag Performance */}
+        <div
+          className="rounded-[12px] p-5 space-y-3.5 transition-colors"
+          style={{
+            backgroundColor: 'var(--surface)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-7 h-7 rounded-[8px] flex items-center justify-center text-indigo-500 bg-indigo-500/10"
+              >
+                <Tag className="w-3.5 h-3.5" />
+              </div>
+              <h3 className="text-[14px] font-bold text-foreground">
+                Banquet Tag Breakdown
+              </h3>
+            </div>
+            <span className="text-[11px] text-foreground-muted">
+              {tagStats.length} active tags
+            </span>
+          </div>
+
+          {tagStats.length > 0 ? (
+            <div className="space-y-2">
+              {tagStats.map(({ tag, total, converted, conversionRate }) => (
+                <div
+                  key={tag}
+                  className="p-2.5 rounded-xl border flex items-center justify-between transition-colors"
+                  style={{
+                    backgroundColor: 'var(--surface-secondary)',
+                    borderColor: 'var(--border)',
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                      {tag}
+                    </span>
+                    <span className="text-xs font-medium text-foreground-secondary">
+                      {total} inquiries
+                    </span>
+                  </div>
+
+                  <div className="text-right text-xs">
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                      {converted} Booked
+                    </span>
+                    <span className="ml-1 text-foreground-muted">
+                      ({conversionRate}%)
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-6 text-center text-xs text-foreground-muted italic">
+              No custom tags tagged yet. Add tags like VIP Client or Pure Veg to see segment performance.
+            </div>
+          )}
         </div>
       </div>
     </div>

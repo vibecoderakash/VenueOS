@@ -182,6 +182,35 @@ export function LeadList({ leads, isLoading = false, onResetFilters }: LeadListP
                   >
                     {sourceBadge.label}
                   </span>
+
+                  {/* Loss reason badge */}
+                  {lead.status === 'Lost' && lead.lost_reason && (
+                    <span
+                      className="text-[10px] px-2 py-0.5 rounded-full border bg-rose-500/10 text-rose-500 border-rose-500/30 font-semibold flex items-center gap-1"
+                      title={lead.lost_reason_details || undefined}
+                    >
+                      <span>❌ {lead.lost_reason}</span>
+                    </span>
+                  )}
+
+                  {/* Custom Tags */}
+                  {lead.tags && lead.tags.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      {lead.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-[9px] px-1.5 py-0.5 rounded-md border bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 font-semibold"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {lead.tags.length > 3 && (
+                        <span className="text-[9px] text-foreground-muted font-bold">
+                          +{lead.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Event Context row */}

@@ -13,10 +13,12 @@ import {
   IndianRupee, 
   FileText, 
   AlertTriangle,
-  ExternalLink
+  ExternalLink,
+  Tag,
+  Plus
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
-import { LeadPriority, BanquetEventType, LeadSource, EventDateStatus, GuestCountStatus } from '@/types/database';
+import { LeadPriority, BanquetEventType, LeadSource, EventDateStatus, GuestCountStatus, BANQUET_POPULAR_TAGS } from '@/types/database';
 import { normalizePhone, banquetEventTypes } from '@/lib/validations/lead';
 import Link from 'next/link';
 
@@ -47,6 +49,8 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
   const [priority, setPriority] = useState<LeadPriority>('Medium');
   const [ownerId, setOwnerId] = useState<string>(currentProfile.id);
   const [requirement, setRequirement] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [customTag, setCustomTag] = useState('');
   const [nextFollowUpAt, setNextFollowUpAt] = useState('');
   const [followUpNote, setFollowUpNote] = useState('');
 
@@ -67,6 +71,8 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
     setPriority('Medium');
     setOwnerId(currentProfile.id);
     setRequirement('');
+    setSelectedTags([]);
+    setCustomTag('');
     setNextFollowUpAt('');
     setFollowUpNote('');
     setValidationError(null);
@@ -161,6 +167,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
         priority: priority,
         owner_id: ownerId || undefined,
         requirement: requirement.trim() || undefined,
+        tags: selectedTags,
         next_follow_up_at: nextFollowUpAt ? new Date(nextFollowUpAt).toISOString() : undefined,
         follow_up_note: followUpNote.trim() || undefined,
       });
@@ -637,7 +644,106 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
             />
           </div>
 
-          {/* Section 5: Initial Follow-up (Optional) */}
+          {/* Section 5: Custom Banquet Tags */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3
+                className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1"
+                style={{ color: 'var(--foreground-muted)' }}
+              >
+                <Tag className="w-3 h-3 text-indigo-500" />
+                <span>Banquet Tags ({selectedTags.length})</span>
+              </h3>
+            </div>
+
+            {/* Selected Tags Display */}
+            {selectedTags.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {selectedTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20"
+                  >
+                    <span>{tag}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTags((prev) => prev.filter((t) => t !== tag))}
+                      className="text-indigo-400 hover:text-rose-500 transition-colors ml-0.5 cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Popular Banquet Suggestions */}
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-foreground-muted uppercase tracking-wider">
+                Quick Select Tags
+              </p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {BANQUET_POPULAR_TAGS.map((popTag) => {
+                  const isSelected = selectedTags.includes(popTag);
+                  return (
+                    <button
+                      key={popTag}
+                      type="button"
+                      onClick={() =>
+                        setSelectedTags((prev) =>
+                          isSelected ? prev.filter((t) => t !== popTag) : [...prev, popTag]
+                        )
+                      }
+                      className={`text-[11px] font-medium px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border-indigo-500/40 font-semibold'
+                          : 'bg-surface text-foreground-secondary border-border hover:border-border-hover'
+                      }`}
+                    >
+                      {isSelected ? `✓ ${popTag}` : `+ ${popTag}`}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Add Custom Tag */}
+            <div className="flex items-center gap-1.5 pt-1">
+              <input
+                type="text"
+                placeholder="Or type custom tag (e.g. Stage Setup)..."
+                value={customTag}
+                onChange={(e) => setCustomTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const trimmed = customTag.trim();
+                    if (trimmed && !selectedTags.includes(trimmed)) {
+                      setSelectedTags((prev) => [...prev, trimmed]);
+                      setCustomTag('');
+                    }
+                  }
+                }}
+                className={inputClass}
+                style={inputStyle}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const trimmed = customTag.trim();
+                  if (trimmed && !selectedTags.includes(trimmed)) {
+                    setSelectedTags((prev) => [...prev, trimmed]);
+                    setCustomTag('');
+                  }
+                }}
+                className="px-3.5 py-2 rounded-lg bg-surface-secondary border border-border text-foreground text-[12px] font-semibold hover:bg-border transition-colors flex-shrink-0 cursor-pointer"
+              >
+                + Add
+              </button>
+            </div>
+          </div>
+
+          {/* Section 6: Initial Follow-up (Optional) */}
           <div
             className="p-3 rounded-[8px] space-y-2 transition-colors"
             style={{
