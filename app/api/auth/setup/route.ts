@@ -108,48 +108,15 @@ export async function POST(req: Request) {
 
     const userId = authData.user.id;
 
-    // 5. Ensure profile is saved with role = 'owner' and active = true
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        full_name: cleanName,
-        name: cleanName,
-        email: cleanEmail,
-        phone: cleanPhone,
-        role: 'owner',
-        is_active: true,
-        active: true,
-        updated_at: new Date().toISOString(),
-      });
-
-    if (profileError) {
-      const safeMsg = sanitizeErrorMessage(profileError, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
-      return NextResponse.json({ error: safeMsg }, { status: 409 });
-    }
-
-    const orgData = {
-      id: 'org-' + (userId.slice(0, 8) || 'venue'),
-      name: venue_name.trim(),
-      email: cleanEmail,
-      phone: cleanPhone,
-      address: '',
-      city: '',
-      currency: 'INR',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
     return NextResponse.json({
       success: true,
-      message: 'Venue OS Owner account created successfully.',
+      message: 'Venue OS Owner account and organization created successfully.',
       user: {
         id: userId,
         email: cleanEmail,
         full_name: cleanName,
         role: 'owner',
       },
-      organization: orgData,
     });
   } catch (err) {
     const safeMsg = sanitizeErrorMessage(err, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
