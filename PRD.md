@@ -78,6 +78,10 @@ The current development baseline includes:
 - Lead activity logs
 - Organization-level filtering/isolation foundations
 - Staff loading foundations
+- Staff account creation with Auth/profile cleanup on profile-write failure
+- Staff self-service profile editing for name, phone, and password
+- Inactive-user read-only access policy
+- Owner-only business profile editing
 - Settings page
 - Business profile settings
 - Organization ID visibility in Settings
@@ -94,6 +98,8 @@ The current development baseline includes:
 - Privacy-preserving setup check RPC (`public.check_has_owner()`)
 - Persistent system audit logging table (`public.system_audit_logs`)
 - Audit logging for organization deletion
+- Organization deletion of all organization-linked Auth users
+- Orphan Auth-user cleanup function with optional scheduled pg_cron execution
 - Standardized API error codes and error response helpers
 - Automated security and API validation test suites (`test-security.mjs`, `test-api.mjs`)
 - Git history and feature-oriented commits
@@ -197,7 +203,7 @@ A database trigger creates:
 - Owner profile
 - Organization relationship
 
-Setup is successful only when the user and organization are created together.
+Setup is successful only when the user, organization, and owner profile are created together. A failed setup must not leave an orphan Auth user or partial organization state.
 
 ## 6.2 Atomic Setup Requirement
 
@@ -225,6 +231,10 @@ Login currently verifies:
 4. Active account status
 
 If the authenticated profile has no organization, the application must sign the user out instead of loading the dashboard with an invalid organization context.
+
+Auth users without a matching database profile are treated as invalid/orphaned accounts and must not receive dashboard access. The UI must show a useful setup/login message rather than silently using fallback profile or venue data.
+
+Inactive users are intended to sign in and view permitted dashboard data, while all business mutations are blocked in both the UI and backend/database policies. The application session behavior must remain aligned with this rule; it must not silently grant mutation access to an inactive account.
 
 Production authentication errors should remain mostly generic to avoid unnecessarily revealing account existence.
 
@@ -476,6 +486,15 @@ The owner must not appear as a duplicate entry in the Sales Owner list.
 
 A staff invitation flow is planned future work and is not assumed complete unless separately implemented.
 
+### 14.1 Staff Permissions
+
+- Owners and General Managers can manage staff accounts according to their role permissions.
+- Staff users cannot manage the team or change organization settings.
+- Staff users can edit only their own name, phone number, and password.
+- Staff email and role are not editable by the staff member.
+- If staff profile creation fails after Auth creation, the newly created Auth user must be deleted automatically.
+- Staff records must be removed when their organization is deleted.
+
 ---
 
 # 15. Settings & Account Management
@@ -493,6 +512,8 @@ Settings currently contains foundations for:
 - Data Isolation
 - Account and Session
 - Danger Zone
+
+Only the owner can edit the business profile. Other roles see the profile as view-only.
 
 The organization ID is displayed in the data-isolation section.
 
@@ -529,6 +550,7 @@ The deletion flow removes organization-owned records including:
 - Settings
 - Organization
 - Current Auth user
+- All other Auth users whose profiles belong to the organization
 
 Deletion is permanent.
 
@@ -536,7 +558,9 @@ The owner is intentionally restricted to the verified Danger Zone path for this 
 
 The organization deletion flow has already been tested successfully, including redirect to Login and return to the fresh setup flow.
 
-Future work should add automated tests and audit logging for deletion.
+The deletion function is defined by the latest organization-deletion migration and must be applied before using the Danger Zone. Direct organization deletion through the Supabase Table Editor is not supported because it can bypass Auth cleanup.
+
+An orphan cleanup function removes old Auth users that have no matching `public.profiles` row. It is intended as a safety net, not a replacement for atomic setup or application-managed deletion.
 
 ---
 
@@ -664,7 +688,8 @@ A feature should not be considered complete merely because it visually works.
 5. Optimistic UI updates (after database persistence confirmation).
 6. Development-only database seed command instead of hardcoded demo data.
 7. Database health/status screen for owners.
-8. Banquet V2 features (Bookings, Calendar Availability, Quotations, Payments, Analytics).
+8. Automated end-to-end tests for setup rollback, deletion/Auth cleanup, inactive read-only access, and orphan cleanup.
+9. Banquet V2 features (Bookings, Calendar Availability, Quotations, Payments, Analytics).
 
 ---
 
@@ -850,6 +875,10 @@ IMPORTANT DATABASE MIGRATIONS:
   - supabase/migrations/20260830_delete_organization.sql
   - supabase/migrations/20260831_atomic_owner_setup.sql
   - supabase/migrations/20260831_security_and_rls_hardening.sql
+  - supabase/migrations/20260831_delete_organization_all_auth_users.sql
+  - supabase/migrations/20260831_inactive_users_read_only.sql
+  - supabase/migrations/20260831_orphan_auth_cleanup.sql
+  - supabase/migrations/20260831_owner_only_business_profile.sql
 DEVELOPMENT COMMAND: npm run dev
 LOCAL URL: http://localhost:3000
 READ BEFORE CHANGING: this PRD + Workflow.md + actual code
