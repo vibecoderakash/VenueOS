@@ -22,6 +22,7 @@ import {
 } from '@/lib/utils';
 import { useData } from '@/lib/data-context';
 import confetti from 'canvas-confetti';
+import { WhatsAppCommunicationModal } from './whatsapp-communication-modal';
 
 interface LeadHeaderProps {
   lead: Lead;
@@ -43,6 +44,7 @@ export function LeadHeader({ lead }: LeadHeaderProps) {
   const [deleteConfirmation, setDeleteConfirmation] = React.useState('');
   const [deleteError, setDeleteError] = React.useState('');
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [whatsappModalOpen, setWhatsappModalOpen] = React.useState(false);
 
   if (!currentProfile) return null;
 
@@ -263,41 +265,45 @@ export function LeadHeader({ lead }: LeadHeaderProps) {
 
         {/* Quick Contact Actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Call */}
+          {/* Direct Mobile Call */}
           <a
-            href={`tel:${lead.phone}`}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] text-[13px] font-semibold transition-colors"
+            href={`tel:${lead.phone.replace(/[^0-9+]/g, '')}`}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] text-[13px] font-semibold transition-all hover:opacity-90 cursor-pointer"
             style={{
               backgroundColor: 'var(--surface-secondary)',
               border: '1px solid var(--border)',
               color: 'var(--foreground-secondary)',
             }}
-            title="Call Customer"
+            title={`Call ${lead.customer_name} (${lead.phone})`}
           >
             <Phone className="w-3.5 h-3.5" style={{ color: 'var(--success)' }} />
             <span>Call</span>
           </a>
 
-          {/* WhatsApp */}
-          <a
-            href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
-              `Hello ${lead.customer_name}, greetings from ${organization?.name || 'our venue'}! We're following up on your ${lead.event_type} inquiry.`
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] text-[13px] font-semibold transition-colors"
+          {/* WhatsApp Hub */}
+          <button
+            type="button"
+            onClick={() => setWhatsappModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] text-[13px] font-semibold transition-all cursor-pointer shadow-sm hover:opacity-95"
             style={{
               backgroundColor: 'var(--success-soft)',
               border: '1px solid var(--success-border)',
               color: 'var(--success)',
             }}
-            title="Open WhatsApp Chat"
+            title="Open WhatsApp Communication Hub"
           >
             <MessageCircle className="w-3.5 h-3.5" />
             <span>WhatsApp</span>
-          </a>
+          </button>
         </div>
       </div>
+
+      {/* WhatsApp Communication Hub Modal */}
+      <WhatsAppCommunicationModal
+        lead={lead}
+        isOpen={whatsappModalOpen}
+        onClose={() => setWhatsappModalOpen(false)}
+      />
     </div>
   );
 }
