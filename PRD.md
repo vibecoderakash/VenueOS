@@ -92,6 +92,7 @@ The current development baseline includes:
 - Themed select fields
 - Calendar/date input improvements
 - Browser autofill mitigation
+- Create Lead form reset after successful submission and manual Clear Form action
 - Improved loading/session handling
 - More useful backend error display
 - Multi-tenant Row-Level Security (RLS) policies across all tables

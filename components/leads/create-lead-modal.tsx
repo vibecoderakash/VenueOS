@@ -53,9 +53,29 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  const resetForm = () => {
+    setCustomerName('');
+    setPhone('');
+    setEmail('');
+    setEventType('');
+    setEventDateStatus('fixed');
+    setEventDate('');
+    setGuestCountStatus('fixed');
+    setGuestCount('');
+    setBudget('');
+    setSource('');
+    setPriority('Medium');
+    setOwnerId(currentProfile.id);
+    setRequirement('');
+    setNextFollowUpAt('');
+    setFollowUpNote('');
+    setValidationError(null);
+    setIsSubmitting(false);
+  };
+
   React.useEffect(() => {
     if (isOpen) {
-      setOwnerId(currentProfile.id);
+      resetForm();
     }
   }, [isOpen, currentProfile.id]);
 
@@ -145,6 +165,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
         follow_up_note: followUpNote.trim() || undefined,
       });
 
+      resetForm();
       onClose();
       router.push(`/leads/${newLead.id}`);
     } catch (err: unknown) {
@@ -686,6 +707,19 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
             className="flex items-center justify-end gap-2 pt-2"
             style={{ borderTop: '1px solid var(--border)' }}
           >
+            <button
+              type="button"
+              onClick={resetForm}
+              disabled={isSubmitting}
+              className="px-3.5 py-1.5 rounded-[8px] text-[12px] font-medium transition-colors hover:opacity-80 disabled:opacity-50"
+              style={{
+                backgroundColor: 'transparent',
+                border: '1px solid var(--border)',
+                color: 'var(--foreground-secondary)',
+              }}
+            >
+              Clear Form
+            </button>
             <button
               type="button"
               onClick={onClose}
