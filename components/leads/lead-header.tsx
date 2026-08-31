@@ -262,17 +262,17 @@ export function LeadHeader({ lead }: LeadHeaderProps) {
         </div>
 
         {/* Quick Contact Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0 pt-2 sm:pt-0">
           {/* Call */}
           <a
-            href={`tel:${lead.phone}`}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] text-[13px] font-semibold transition-colors"
+            href={`tel:${lead.phone.replace(/[^0-9+]/g, '')}`}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-2 rounded-lg text-[13px] font-semibold transition-all active:scale-95 cursor-pointer shadow-xs"
             style={{
               backgroundColor: 'var(--surface-secondary)',
               border: '1px solid var(--border)',
               color: 'var(--foreground-secondary)',
             }}
-            title="Call Customer"
+            title={`Direct Call ${lead.customer_name} (${lead.phone})`}
           >
             <Phone className="w-3.5 h-3.5" style={{ color: 'var(--success)' }} />
             <span>Call</span>
@@ -285,7 +285,7 @@ export function LeadHeader({ lead }: LeadHeaderProps) {
             )}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] text-[13px] font-semibold transition-colors"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-2 rounded-lg text-[13px] font-semibold transition-all active:scale-95 cursor-pointer shadow-xs"
             style={{
               backgroundColor: 'var(--success-soft)',
               border: '1px solid var(--success-border)',

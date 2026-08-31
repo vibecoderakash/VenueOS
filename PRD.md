@@ -727,13 +727,14 @@ A feature should not be considered complete merely because it visually works.
 - ✅ Dedicated `public.system_audit_logs` table for tracking security lifecycle events.
 - ✅ Audit logging integrated into `public.delete_current_organization` RPC prior to cascaded deletion.
 - ✅ Verified that Supabase service-role keys are strictly server-side (`lib/supabase/admin.ts`) and never leaked to browser code.
-- ✅ Automated test suites (`test-security.mjs`, `test-api.mjs`, `test-leads.mjs`, `test-pagination.mjs`, `test-recovery.mjs`, `test-e2e.mjs`) — 79 automated tests passing with 0 failures (`npm test`).
+- ✅ Automated test suites (`test-security.mjs`, `test-api.mjs`, `test-leads.mjs`, `test-pagination.mjs`, `test-recovery.mjs`, `test-e2e.mjs`) — 80 automated tests passing with 0 failures (`npm test`).
 - ✅ Lead pagination & 5-at-a-time infinite scrolling with debounced filtering, skeleton loading states, race-condition prevention, and end-of-total-leads indicators.
 - ✅ Development-only database seed script (`scripts/seed-database.mjs`, `npm run seed`) creating owner, manager, sales staff, and 15 realistic banquet inquiries with discussions and logs.
 - ✅ Password recovery & reset flow (`/forgot-password`, `/reset-password`, and validation test suite `test-recovery.mjs`).
 - ✅ Optimistic UI updates with resilient state rollback on Supabase mutation failure.
 - ✅ Owner Health & Security Diagnostics dashboard in Settings (`/api/health/diagnostics`, `components/settings/health-diagnostics.tsx`) with latency monitoring, live tenant table stats, RLS status, orphan user checker, and system audit log viewer.
-- ✅ Direct Staff Account Creation (`app/api/team/create-staff/route.ts` & `components/settings/team-management.tsx`) with role selection (`Manager` vs `Staff`) and instant login credentials.
+- ✅ Direct Staff Account Creation (`app/api/team/create-staff/route.ts` & `components/settings/team-management.tsx`) with role selection (`Manager` vs `Staff`), mandatory password enforcement, and instant login credentials.
+- ✅ Mobile & Tablet UI/UX Polish (`components/layout/mobile-bottom-nav.tsx`, `MobileSidebarDrawer`, touch-friendly lead cards, bottom sheets for create lead modal, iOS zoom prevention, 2-column mobile KPI cards).
 - ✅ Setup email confirmation handling (`app/setup/page.tsx`) with dedicated verification notice screen.
 - ✅ Automated End-to-End Test Suite (`scripts/test-e2e.mjs`, `npm run test:e2e`).
 

@@ -251,32 +251,33 @@ export function LeadList({ leads, isLoading = false, onResetFilters }: LeadListP
               </div>
 
               {/* Right Action & Follow-up Block */}
-              <div
-                className="flex flex-row lg:flex-col items-end justify-between lg:justify-center gap-2 flex-shrink-0 pt-2 lg:pt-0"
-              >
+              <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-2.5 flex-shrink-0 pt-2 lg:pt-0 border-t sm:border-t-0 border-border/60">
                 {/* Follow-up Status Badge */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-start">
                   <span
-                    className={`text-[11px] px-2 py-0.5 rounded-full border flex items-center gap-1 font-medium ${followUp.badgeClass}`}
+                    className={`text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1 font-medium ${followUp.badgeClass}`}
                   >
-                    <Clock className="w-3 h-3" />
+                    <Clock className="w-3.5 h-3.5" />
                     <span>{followUp.label}</span>
+                  </span>
+                  <span className="sm:hidden text-[11px] text-foreground-muted">
+                    {formatDisplayPhone(lead.phone)}
                   </span>
                 </div>
 
-                {/* Quick Contact Buttons */}
-                <div className="flex items-center gap-1.5">
+                {/* Quick Contact & Navigation Actions */}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <a
-                    href={`tel:${lead.phone}`}
-                    className="px-2.5 py-1 rounded-[6px] text-[12px] font-medium flex items-center gap-1 transition-colors"
+                    href={`tel:${lead.phone.replace(/[^0-9+]/g, '')}`}
+                    className="flex-1 sm:flex-none px-3 py-2 sm:py-1 rounded-lg text-[13px] sm:text-[12px] font-medium flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-xs"
                     style={{
                       backgroundColor: 'var(--surface-secondary)',
                       border: '1px solid var(--border)',
                       color: 'var(--foreground-secondary)',
                     }}
-                    title="Call Customer"
+                    title={`Direct Call ${lead.customer_name} (${lead.phone})`}
                   >
-                    <Phone className="w-3 h-3" style={{ color: 'var(--success)' }} />
+                    <Phone className="w-3.5 h-3.5" style={{ color: 'var(--success)' }} />
                     <span>Call</span>
                   </a>
 
@@ -286,7 +287,7 @@ export function LeadList({ leads, isLoading = false, onResetFilters }: LeadListP
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-2.5 py-1 rounded-[6px] text-[12px] font-medium flex items-center gap-1 transition-colors"
+                    className="flex-1 sm:flex-none px-3 py-2 sm:py-1 rounded-lg text-[13px] sm:text-[12px] font-medium flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer shadow-xs"
                     style={{
                       backgroundColor: 'var(--surface-secondary)',
                       border: '1px solid var(--border)',
@@ -294,20 +295,20 @@ export function LeadList({ leads, isLoading = false, onResetFilters }: LeadListP
                     }}
                     title="Open WhatsApp Chat"
                   >
-                    <MessageCircle className="w-3 h-3" />
+                    <MessageCircle className="w-3.5 h-3.5" />
                     <span>WhatsApp</span>
                   </a>
 
                   <Link
                     href={`/leads/${lead.id}`}
-                    className="px-3 py-1 rounded-[6px] text-[12px] font-semibold flex items-center gap-1 transition-colors"
+                    className="px-3.5 py-2 sm:py-1 rounded-lg text-[13px] sm:text-[12px] font-semibold flex items-center justify-center gap-1 transition-all active:scale-95 shadow-xs"
                     style={{
                       backgroundColor: 'var(--primary)',
                       color: 'var(--primary-fg)',
                     }}
                   >
                     <span>Open</span>
-                    <ArrowRight className="w-3 h-3" />
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>

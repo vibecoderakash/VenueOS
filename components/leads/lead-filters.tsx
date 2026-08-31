@@ -58,7 +58,7 @@ export function LeadFilters({ filters, onFilterChange, onReset }: LeadFiltersPro
             placeholder="Search customer, phone, requirement, or notes..."
             value={filters.searchQuery}
             onChange={(e) => onFilterChange({ searchQuery: e.target.value })}
-            className="w-full rounded-[6px] px-3 py-1.5 pl-8 text-[12px] placeholder-opacity-60 focus:outline-none transition-all"
+            className="w-full rounded-[8px] px-3 py-2 sm:py-1.5 pl-8 text-[16px] sm:text-[12px] placeholder-opacity-60 focus:outline-none transition-all"
             style={{
               backgroundColor: 'var(--surface-secondary)',
               border: '1px solid var(--border)',

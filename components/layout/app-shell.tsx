@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { Building2, AlertTriangle, RefreshCw } from 'lucide-react';
 
 const PUBLIC_ROUTES = ['/login', '/setup', '/forgot-password', '/reset-password'];
@@ -127,9 +128,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             This account is inactive. You can view venue data, but changes are disabled until an administrator reactivates your account.
           </div>
         )}
-        <main className="flex-1 p-4 sm:p-6 lg:p-7 max-w-[1400px] w-full mx-auto">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-7 max-w-[1400px] w-full mx-auto pb-24 md:pb-7">
           {children}
         </main>
+        <MobileBottomNav />
       </div>
     </div>
   );

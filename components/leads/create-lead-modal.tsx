@@ -179,7 +179,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
     }
   };
 
-  const inputClass = "w-full rounded-[6px] px-2.5 py-1.5 text-[12px] focus:outline-none transition-all";
+  const inputClass = "w-full rounded-[8px] px-3 py-2 text-[16px] sm:text-[13px] focus:outline-none transition-all";
   const inputStyle: React.CSSProperties = {
     backgroundColor: 'var(--surface-secondary)',
     border: '1px solid var(--border)',
@@ -187,9 +187,9 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xs overflow-hidden animate-fadeIn">
       <div
-        className="rounded-[12px] max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-xl my-8 transition-colors"
+        className="rounded-t-2xl sm:rounded-2xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl transition-all max-h-[92vh] sm:max-h-[90vh] flex flex-col my-0 sm:my-8 animate-slideInUp sm:animate-fadeIn"
         style={{
           backgroundColor: 'var(--surface)',
           border: '1px solid var(--border)',
@@ -197,7 +197,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between pb-3"
+          className="flex items-center justify-between pb-3 flex-shrink-0"
           style={{ borderBottom: '1px solid var(--border)' }}
         >
           <div className="flex items-center gap-2">
@@ -271,7 +271,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
         )}
 
         {/* Creation Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 pr-1 py-0.5">
           {/* Section 1: Customer Contact Info */}
           <div className="space-y-2">
             <h3
@@ -707,14 +707,14 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
 
           {/* Footer Actions */}
           <div
-            className="flex items-center justify-end gap-2 pt-2"
+            className="flex items-center justify-end gap-2 pt-3 mt-2 border-t flex-shrink-0 bg-surface sticky bottom-0 z-10"
             style={{ borderTop: '1px solid var(--border)' }}
           >
             <button
               type="button"
               onClick={resetForm}
               disabled={isSubmitting}
-              className="px-3.5 py-1.5 rounded-[8px] text-[12px] font-medium transition-colors hover:opacity-80 disabled:opacity-50"
+              className="px-3 py-2 rounded-[8px] text-[13px] sm:text-[12px] font-medium transition-colors hover:opacity-80 disabled:opacity-50 cursor-pointer"
               style={{
                 backgroundColor: 'transparent',
                 border: '1px solid var(--border)',
@@ -726,7 +726,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 rounded-[8px] text-[12px] font-medium transition-colors hover:opacity-80"
+              className="px-3.5 py-2 rounded-[8px] text-[13px] sm:text-[12px] font-medium transition-colors hover:opacity-80 cursor-pointer"
               style={{
                 backgroundColor: 'var(--surface-secondary)',
                 border: '1px solid var(--border)',
@@ -738,7 +738,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-1.5 rounded-[8px] text-white font-semibold text-[13px] transition-colors disabled:opacity-50 hover:opacity-90"
+              className="px-5 py-2 rounded-[8px] text-white font-semibold text-[14px] sm:text-[13px] transition-all disabled:opacity-50 hover:opacity-90 active:scale-95 shadow-sm cursor-pointer"
               style={{ backgroundColor: 'var(--primary)' }}
             >
               {isSubmitting ? 'Creating Lead...' : 'Create Lead'}

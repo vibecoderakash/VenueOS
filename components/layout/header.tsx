@@ -10,11 +10,13 @@ import {
   Sun,
   Moon,
   Monitor,
+  Menu,
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
 import { CreateLeadModal } from '@/components/leads/create-lead-modal';
+import { MobileSidebarDrawer } from '@/components/layout/sidebar';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +32,7 @@ export function Header() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const overdueCount = metrics.overdueFollowUpsCount;
   const dueTodayCount = metrics.dueTodayFollowUpsCount;
@@ -58,14 +61,28 @@ export function Header() {
   return (
     <>
       <header
-        className="h-[52px] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-150"
+        className="h-[52px] px-3 sm:px-6 flex items-center justify-between sticky top-0 z-20 transition-colors duration-150 gap-2"
         style={{
           backgroundColor: 'var(--surface)',
           borderBottom: '1px solid var(--border)',
         }}
       >
-        {/* Left: Global Search */}
-        <div className="flex items-center gap-4 flex-1 max-w-sm">
+        {/* Left: Mobile Menu Toggle & Global Search */}
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 max-w-sm">
+          <button
+            type="button"
+            onClick={() => setMobileDrawerOpen(true)}
+            className="md:hidden p-1.5 rounded-lg transition-colors cursor-pointer flex-shrink-0"
+            style={{
+              color: 'var(--foreground-muted)',
+              border: '1px solid var(--border)',
+              backgroundColor: 'var(--surface-secondary)',
+            }}
+            aria-label="Open menu drawer"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+
           <form onSubmit={handleSearchSubmit} className="relative w-full">
             <Search
               className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -207,6 +224,7 @@ export function Header() {
       </header>
 
       <CreateLeadModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
+      <MobileSidebarDrawer isOpen={mobileDrawerOpen} onClose={() => setMobileDrawerOpen(false)} />
     </>
   );
 }

@@ -19,6 +19,7 @@ import {
   ShieldAlert,
   PanelLeftClose,
   PanelLeftOpen,
+  X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useData } from '@/lib/data-context';
@@ -125,7 +126,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'flex-shrink-0 flex flex-col h-screen sticky top-0 z-30 select-none transition-[width] duration-200',
+        'hidden md:flex flex-shrink-0 flex-col h-screen sticky top-0 z-30 select-none transition-[width] duration-200',
         isCollapsed ? 'w-[72px]' : 'w-[230px]'
       )}
       style={{
@@ -369,5 +370,278 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+  );
+}
+
+export function MobileSidebarDrawer({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const pathname = usePathname();
+  const { profile, role, isOwner, isManager, signOut } = useAuth();
+  const { organization, metrics, leads } = useData();
+
+  if (!isOpen) return null;
+
+  const activeLeadsCount = leads.filter((l) => !l.archived_at).length;
+  const overdueCount = metrics.overdueFollowUpsCount;
+
+  const roleKey = role || 'staff';
+  const roleBadge = ROLE_BADGES[roleKey] || ROLE_BADGES.staff;
+  const displayName = profile?.full_name || profile?.name || 'Staff User';
+
+  const navSections: NavSection[] = [
+    {
+      title: 'Main',
+      items: [
+        {
+          name: 'Dashboard',
+          href: '/',
+          icon: LayoutDashboard,
+          badge: overdueCount > 0 ? String(overdueCount) : null,
+          badgeVariant: 'danger',
+        },
+        {
+          name: 'Leads',
+          href: '/leads',
+          icon: Users2,
+          badge: activeLeadsCount > 0 ? String(activeLeadsCount) : null,
+          badgeVariant: 'muted',
+        },
+        {
+          name: 'Reports',
+          href: '/reports',
+          icon: BarChart3,
+        },
+        {
+          name: 'Settings',
+          href: '/settings',
+          icon: Settings,
+        },
+      ],
+    },
+    {
+      title: 'Coming in V2',
+      items: [
+        { name: 'Bookings', href: '#', icon: CalendarDays, disabled: true, badge: 'Soon' },
+        { name: 'Quotations', href: '#', icon: FileText, disabled: true, badge: 'Soon' },
+        { name: 'Calendar', href: '#', icon: Layers, disabled: true, badge: 'Soon' },
+        { name: 'Customers', href: '#', icon: UserCheck, disabled: true, badge: 'Soon' },
+        { name: 'Payments', href: '#', icon: CreditCard, disabled: true, badge: 'Soon' },
+      ],
+    },
+  ];
+
+  return (
+    <div
+      className="md:hidden fixed inset-0 z-50 flex bg-black/65 backdrop-blur-sm animate-fadeIn"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mobile-nav-drawer"
+    >
+      <div
+        className="w-4/5 max-w-xs h-full flex flex-col shadow-2xl animate-slideInLeft"
+        style={{
+          backgroundColor: 'var(--sidebar)',
+          borderRight: '1px solid var(--sidebar-border)',
+        }}
+      >
+        {/* Header with Brand & Close Button */}
+        <div
+          className="flex items-center justify-between px-4 py-4"
+          style={{ borderBottom: '1px solid var(--sidebar-border)' }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-xs"
+              style={{ backgroundColor: 'var(--primary)' }}
+            >
+              <Building2 className="w-4 h-4" />
+            </div>
+            <div>
+              <span
+                className="text-[14px] font-bold tracking-wide block leading-tight"
+                style={{ color: 'var(--sidebar-foreground)' }}
+              >
+                VENUE OS
+              </span>
+              <span
+                className="text-[10px] font-medium"
+                style={{ color: 'var(--sidebar-foreground-muted)' }}
+              >
+                Banquet Hall V1
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg transition-colors cursor-pointer"
+            style={{ color: 'var(--sidebar-foreground-muted)' }}
+            aria-label="Close menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Venue Context Card */}
+        <div className="p-3" style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
+          <div
+            className="rounded-lg p-2.5 space-y-1"
+            style={{
+              backgroundColor: 'var(--sidebar-surface)',
+              border: '1px solid var(--sidebar-border)',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ backgroundColor: 'var(--success)' }}
+              />
+              <span
+                className="text-[13px] font-semibold truncate leading-none"
+                style={{ color: 'var(--sidebar-foreground)' }}
+              >
+                {organization.name}
+              </span>
+            </div>
+            <span
+              className="text-[10px] font-medium block leading-none"
+              style={{ color: 'var(--sidebar-foreground-muted)' }}
+            >
+              Single-Venue Instance
+            </span>
+          </div>
+        </div>
+
+        {/* Nav Items */}
+        <nav className="flex-1 py-3 px-3 space-y-4 overflow-y-auto">
+          {navSections.map((section) => (
+            <div key={section.title} className="space-y-1">
+              <span
+                className="text-[10px] font-semibold uppercase tracking-wider px-2 block"
+                style={{ color: 'var(--sidebar-foreground-muted)' }}
+              >
+                {section.title}
+              </span>
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = !item.disabled && (
+                    item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
+                  );
+
+                  if (item.disabled) {
+                    return (
+                      <div
+                        key={item.name}
+                        className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium opacity-40 cursor-not-allowed"
+                        style={{ color: 'var(--sidebar-foreground-muted)' }}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span>{item.name}</span>
+                        <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10">
+                          {item.badge}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={onClose}
+                      className={cn(
+                        'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors',
+                        isActive
+                          ? 'font-semibold'
+                          : 'hover:bg-white/5'
+                      )}
+                      style={{
+                        backgroundColor: isActive ? 'var(--sidebar-active-bg)' : 'transparent',
+                        color: isActive ? 'var(--sidebar-active-color)' : 'var(--sidebar-foreground-secondary)',
+                      }}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{item.name}</span>
+                      {item.badge && (
+                        <span
+                          className={cn(
+                            'ml-auto text-[10px] font-bold px-1.5 py-0.2 rounded-full',
+                            item.badgeVariant === 'danger'
+                              ? 'bg-rose-500/20 text-rose-400'
+                              : 'bg-indigo-500/20 text-indigo-400'
+                          )}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Profile and Sign Out Footer */}
+        <div className="p-3" style={{ borderTop: '1px solid var(--sidebar-border)' }}>
+          <div
+            className="rounded-lg p-2.5 flex items-center justify-between gap-2"
+            style={{
+              backgroundColor: 'var(--sidebar-surface)',
+              border: '1px solid var(--sidebar-border)',
+            }}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                className="w-8 h-8 rounded-lg text-white font-bold text-xs flex items-center justify-center flex-shrink-0"
+                style={{
+                  backgroundColor: isOwner ? '#d97706' : isManager ? '#4f46e5' : '#64748b',
+                }}
+              >
+                {displayName.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p
+                  className="text-[12px] font-semibold truncate leading-tight"
+                  style={{ color: 'var(--sidebar-foreground)' }}
+                >
+                  {displayName}
+                </p>
+                <span
+                  className="inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded mt-0.5"
+                  style={{
+                    backgroundColor: roleBadge.bg,
+                    color: roleBadge.color,
+                  }}
+                >
+                  {ROLE_LABELS[roleKey] || roleKey}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                signOut();
+              }}
+              title="Sign Out"
+              className="p-1.5 rounded-lg transition-colors cursor-pointer hover:bg-rose-500/20 hover:text-rose-400"
+              style={{ color: 'var(--sidebar-foreground-muted)' }}
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* Backdrop click area */}
+      <div className="flex-1" onClick={onClose} />
+    </div>
   );
 }
