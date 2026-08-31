@@ -319,6 +319,13 @@ The current lead form supports:
 - Every schema-supported event type, including Party, is available in the form.
 - Phone number is mandatory where the workflow requires it.
 
+## 8.3 Lead Follow-up Save Behavior
+
+- Quick follow-up shortcuts only populate the follow-up date/time and note fields.
+- Selecting a shortcut never writes to the database immediately.
+- The user must explicitly select Save to persist a new or changed follow-up.
+- Cancel discards shortcut or manual edits and restores the currently saved follow-up.
+
 ## 8.3 Implemented Lead Operations
 
 The application already supports:

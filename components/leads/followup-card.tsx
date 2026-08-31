@@ -28,24 +28,25 @@ export function FollowupCard({ lead }: FollowupCardProps) {
   const followUp = getFollowUpStatus(lead.next_follow_up_at);
   const isOverdue = followUp.status === 'overdue';
 
-  const handleSave = async (customDate?: string, customNote?: string) => {
-    const targetDate = customDate !== undefined ? customDate : followUpDate;
-    const targetNote = customNote !== undefined ? customNote : note;
+  const resetDraft = () => {
+    setFollowUpDate(formatForDateTimeLocal(lead.next_follow_up_at));
+    setNote(lead.follow_up_note || '');
+  };
 
+  const handleSave = async () => {
     await updateFollowUp(
       lead.id,
-      targetDate ? new Date(targetDate).toISOString() : null,
-      targetNote || null
+      followUpDate ? new Date(followUpDate).toISOString() : null,
+      note || null
     );
     setIsEditing(false);
   };
 
-  const applyPreset = async (presetType: 'today_eve' | 'tomorrow_morn' | 'in_2_days' | 'next_mon' | 'clear') => {
+  const applyPreset = (presetType: 'today_eve' | 'tomorrow_morn' | 'in_2_days' | 'next_mon' | 'clear') => {
     if (presetType === 'clear') {
       setFollowUpDate('');
       setNote('');
-      await updateFollowUp(lead.id, null, null);
-      setIsEditing(false);
+      setIsEditing(true);
       return;
     }
 
@@ -69,8 +70,7 @@ export function FollowupCard({ lead }: FollowupCardProps) {
     const isoString = d.toISOString();
     setFollowUpDate(isoString.slice(0, 16));
     setNote(defaultNote);
-    await updateFollowUp(lead.id, isoString, defaultNote);
-    setIsEditing(false);
+    setIsEditing(true);
   };
 
   return (
@@ -253,7 +253,10 @@ export function FollowupCard({ lead }: FollowupCardProps) {
 
           <div className="flex items-center justify-end gap-1.5 pt-1">
             <button
-              onClick={() => setIsEditing(false)}
+                  onClick={() => {
+                    resetDraft();
+                    setIsEditing(false);
+                  }}
               className="px-2.5 py-1 text-[12px] font-medium"
               style={{ color: 'var(--foreground-muted)' }}
             >
