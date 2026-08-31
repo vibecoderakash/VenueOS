@@ -26,7 +26,6 @@ import {
   formatDisplayPhone
 } from '@/lib/utils';
 import { useData } from '@/lib/data-context';
-import { WhatsAppCommunicationModal } from './whatsapp-communication-modal';
 
 interface LeadListProps {
   leads: Lead[];
@@ -36,7 +35,6 @@ interface LeadListProps {
 
 export function LeadList({ leads, isLoading = false, onResetFilters }: LeadListProps) {
   const { profiles, getDiscussionsByLeadId, organization } = useData();
-  const [selectedLeadForWhatsApp, setSelectedLeadForWhatsApp] = React.useState<Lead | null>(null);
 
   if (isLoading && leads.length === 0) {
     return (
@@ -269,33 +267,36 @@ export function LeadList({ leads, isLoading = false, onResetFilters }: LeadListP
                 {/* Quick Contact Buttons */}
                 <div className="flex items-center gap-1.5">
                   <a
-                    href={`tel:${lead.phone.replace(/[^0-9+]/g, '')}`}
-                    className="px-2.5 py-1 rounded-[6px] text-[12px] font-medium flex items-center gap-1 transition-all hover:opacity-90 cursor-pointer"
+                    href={`tel:${lead.phone}`}
+                    className="px-2.5 py-1 rounded-[6px] text-[12px] font-medium flex items-center gap-1 transition-colors"
                     style={{
                       backgroundColor: 'var(--surface-secondary)',
                       border: '1px solid var(--border)',
                       color: 'var(--foreground-secondary)',
                     }}
-                    title={`Direct Call ${lead.customer_name} (${lead.phone})`}
+                    title="Call Customer"
                   >
                     <Phone className="w-3 h-3" style={{ color: 'var(--success)' }} />
                     <span>Call</span>
                   </a>
 
-                  <button
-                    type="button"
-                    onClick={() => setSelectedLeadForWhatsApp(lead)}
-                    className="px-2.5 py-1 rounded-[6px] text-[12px] font-medium flex items-center gap-1 transition-all cursor-pointer shadow-sm hover:opacity-90"
+                  <a
+                    href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                      `Hello ${lead.customer_name}, greetings from ${organization?.name || 'our venue'}! We are following up regarding your ${lead.event_type} inquiry.`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1 rounded-[6px] text-[12px] font-medium flex items-center gap-1 transition-colors"
                     style={{
                       backgroundColor: 'var(--surface-secondary)',
                       border: '1px solid var(--border)',
                       color: 'var(--success)',
                     }}
-                    title="Open WhatsApp Communication Hub"
+                    title="Open WhatsApp Chat"
                   >
                     <MessageCircle className="w-3 h-3" />
                     <span>WhatsApp</span>
-                  </button>
+                  </a>
 
                   <Link
                     href={`/leads/${lead.id}`}
@@ -314,15 +315,6 @@ export function LeadList({ leads, isLoading = false, onResetFilters }: LeadListP
           </div>
         );
       })}
-
-      {/* WhatsApp Communication Hub Modal */}
-      {selectedLeadForWhatsApp && (
-        <WhatsAppCommunicationModal
-          lead={selectedLeadForWhatsApp}
-          isOpen={Boolean(selectedLeadForWhatsApp)}
-          onClose={() => setSelectedLeadForWhatsApp(null)}
-        />
-      )}
     </div>
   );
 }
