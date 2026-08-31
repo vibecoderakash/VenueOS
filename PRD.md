@@ -591,6 +591,7 @@ Completed UI improvements include:
 - Reduced browser autofill interference
 - Improved invalid/unlinked-session loading behavior
 - More useful exact backend errors where appropriate
+- Form validation uses readable inline errors instead of browser-native format popups
 - Bold, high-contrast role colors for Owner, Manager, and Staff badges
 
 The application should retain the existing professional business-app direction.

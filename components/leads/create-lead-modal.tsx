@@ -270,7 +270,6 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                 </label>
                 <input
                   type="text"
-                  required
                   placeholder="e.g. Amit Kapur"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
@@ -288,10 +287,8 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                 </label>
                 <input
                   type="tel"
-                  required
                   inputMode="numeric"
                   maxLength={10}
-                  pattern="[0-9]{10}"
                   placeholder="e.g. 9876543210"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -308,7 +305,8 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                   Email Address
                 </label>
                 <input
-                  type="email"
+                  type="text"
+                  inputMode="email"
                   placeholder="e.g. amit@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -342,7 +340,6 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                   onChange={(e) => setEventType(e.target.value as BanquetEventType | '')}
                   className={`${inputClass} ${!eventType ? 'text-[var(--foreground-muted)]' : ''}`}
                   style={inputStyle}
-                  required
                 >
                   <option value="" disabled>Select Event Type</option>
                   <option value="Wedding">Wedding</option>
@@ -543,7 +540,6 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                 onChange={(e) => setSource(e.target.value as LeadSource | '')}
                 className={`${inputClass} ${!source ? 'text-[var(--foreground-muted)]' : ''}`}
                 style={inputStyle}
-                required
               >
                 <option value="" disabled>Select Lead Source</option>
                 <option value="Meta">Meta Ads</option>
