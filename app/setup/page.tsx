@@ -343,7 +343,7 @@ export default function SetupPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
             
             {/* Full Name */}
             <div>
@@ -356,6 +356,7 @@ export default function SetupPage() {
                 </div>
                 <input
                   type="text"
+                  autoComplete="name"
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -377,6 +378,7 @@ export default function SetupPage() {
                 <input
                   type="email"
                   required
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="owner@yourvenue.com"
@@ -399,6 +401,7 @@ export default function SetupPage() {
                 </div>
                 <input
                   type="tel"
+                  autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 98765 43210"
@@ -418,6 +421,7 @@ export default function SetupPage() {
                 </div>
                 <input
                   type="text"
+                  autoComplete="organization"
                   value={venueName}
                   onChange={(e) => setVenueName(e.target.value)}
                   placeholder="The Grand Imperial Banquet"
@@ -438,6 +442,7 @@ export default function SetupPage() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a strong password"
@@ -465,6 +470,7 @@ export default function SetupPage() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm password"
