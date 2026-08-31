@@ -100,10 +100,20 @@ function LoginFormContent() {
     setIsLoading(true);
 
     try {
+      // Check if venue has been initialized
+      const ownerExists = await checkOwnerExists();
+      setHasOwner(ownerExists);
+
+      if (!ownerExists) {
+        setErrorMsg('No venue or owner account exists in the database. Please initialize your Venue Owner account first.');
+        setIsLoading(false);
+        return;
+      }
+
       const res = await signIn(identifier.trim().toLowerCase(), password);
 
       if (!res.success) {
-        setErrorMsg(res.error || 'Invalid login credentials.');
+        setErrorMsg(res.error || 'Email or password is incorrect.');
         setIsLoading(false);
         return;
       }
@@ -278,7 +288,18 @@ function LoginFormContent() {
           {errorMsg && (
             <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200/80 text-rose-700 text-xs sm:text-sm flex items-start gap-2.5 animate-fadeIn">
               <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
+              <div className="flex flex-col gap-1.5 flex-1">
+                <span>{errorMsg}</span>
+                {hasOwner === false && (
+                  <Link
+                    href="/setup"
+                    className="inline-flex items-center gap-1 font-semibold text-rose-800 hover:text-rose-950 underline text-xs mt-0.5"
+                  >
+                    <span>Click here to set up your Venue Owner account</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                )}
+              </div>
             </div>
           )}
 

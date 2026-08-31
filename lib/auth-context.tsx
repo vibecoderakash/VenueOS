@@ -369,6 +369,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             error.message.toLowerCase().includes('invalid login credentials') ||
             error.message.toLowerCase().includes('invalid grant')
           ) {
+            const ownerExists = await checkOwnerExists();
+            if (!ownerExists) {
+              return {
+                success: false,
+                error: 'No venue or user account exists yet in the database. Please initialize your Venue Owner account first.',
+              };
+            }
             return { success: false, error: 'Email or password is incorrect.' };
           }
           return { success: false, error: error.message };

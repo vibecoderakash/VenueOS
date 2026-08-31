@@ -1,19 +1,19 @@
 // Automated Security & RLS Hardening Verification Test Suite
 async function detectOrigin() {
-  const ports = [3000, 3001, 3002];
+  const ports = [3000, 3001];
   for (const port of ports) {
     try {
       const res = await fetch(`http://localhost:${port}/api/auth/setup-status`, {
-        signal: AbortSignal.timeout(2000),
+        signal: AbortSignal.timeout(1000),
       });
       if (res.status === 200) {
         return `http://localhost:${port}`;
       }
     } catch {
-      // try next
+      // continue
     }
   }
-  return 'http://localhost:3001';
+  return 'http://localhost:3000';
 }
 
 async function runSecurityTests() {
