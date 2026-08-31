@@ -19,6 +19,8 @@ import {
   UserCheck,
   Building2,
   Trash2,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { createBrowserClient } from '@/lib/supabase/client';
@@ -56,6 +58,8 @@ export function TeamManagement() {
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [inviteMode, setInviteMode] = useState<'invite' | 'password'>('invite');
+  const [createdInviteLink, setCreatedInviteLink] = useState<{ email: string; link: string } | null>(null);
+  const [hasCopied, setHasCopied] = useState(false);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
@@ -206,7 +210,13 @@ export function TeamManagement() {
         return;
       }
 
-      showToast(data.message || 'Staff member added successfully!', 'success');
+      if (data.inviteLink) {
+        setCreatedInviteLink({ email: newEmail.trim(), link: data.inviteLink });
+        setHasCopied(false);
+      } else {
+        showToast(data.message || 'Staff member added successfully!', 'success');
+      }
+
       setIsAddOpen(false);
       setAddError(null);
       setNewName('');
@@ -1014,6 +1024,100 @@ export function TeamManagement() {
               >
                 <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
                 <span>{isDeleting ? 'Deleting...' : 'Delete Permanently'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL: Invitation Created & Direct Link Ready
+          ========================================================================= */}
+      {createdInviteLink && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div
+            className="w-full max-w-lg rounded-2xl border shadow-2xl p-6 sm:p-7 space-y-5"
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderColor: 'var(--border)',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-foreground">
+                    Invitation Link Ready!
+                  </h3>
+                  <p className="text-xs text-foreground-muted">
+                    Share this link directly or let Supabase deliver the email
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCreatedInviteLink(null)}
+                className="p-1.5 rounded-lg text-foreground-muted hover:text-foreground cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-xl bg-surface-secondary border text-xs sm:text-sm text-foreground-secondary space-y-2" style={{ borderColor: 'var(--border)' }}>
+              <p>
+                An invite has been prepared for <strong className="text-foreground">{createdInviteLink.email}</strong>.
+              </p>
+              <p className="text-xs text-foreground-muted leading-relaxed">
+                If the email is delayed or your SMTP is rate-limited, you can copy this one-time link and send it directly to the staff member via WhatsApp, Slack, or SMS:
+              </p>
+            </div>
+
+            {/* Link Box with Copy Button */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 p-2.5 rounded-xl border bg-background" style={{ borderColor: 'var(--border)' }}>
+                <input
+                  type="text"
+                  readOnly
+                  value={createdInviteLink.link}
+                  className="w-full bg-transparent text-xs font-mono text-foreground focus:outline-none select-all truncate"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(createdInviteLink.link);
+                    setHasCopied(true);
+                    setTimeout(() => setHasCopied(false), 2500);
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex-shrink-0 ${
+                    hasCopied
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-primary text-white hover:opacity-90'
+                  }`}
+                >
+                  {hasCopied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy Link</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setCreatedInviteLink(null)}
+                className="px-5 py-2.5 rounded-xl font-semibold text-white shadow-md transition-all cursor-pointer"
+                style={{ backgroundColor: 'var(--primary)' }}
+              >
+                Done
               </button>
             </div>
           </div>

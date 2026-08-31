@@ -103,27 +103,34 @@ export async function POST(req: Request) {
     const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const redirectTo = `${origin}/accept-invite`;
 
+    let inviteLink: string | null = null;
+
     if (adminClient) {
-      // 7. Send invitation via Supabase Auth Admin API with redirectTo pointing to accept-invite
-      const { data: inviteData, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(cleanEmail, {
-        redirectTo,
-        data: {
-          full_name: cleanName,
-          name: cleanName,
-          phone: cleanPhone,
-          role: assignedRole,
-          organization_id: caller.profile.organization_id || undefined,
+      // 7. Generate direct invite link via Supabase Auth Admin API
+      const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
+        type: 'invite',
+        email: cleanEmail,
+        options: {
+          redirectTo,
+          data: {
+            full_name: cleanName,
+            name: cleanName,
+            phone: cleanPhone,
+            role: assignedRole,
+            organization_id: caller.profile.organization_id || undefined,
+          },
         },
       });
 
-      if (inviteErr) {
-        // If inviteUserByEmail is not enabled on standard SMTP, fallback to creating user and sending reset instructions
-        const tempPassword = `VenueOS@${Math.random().toString(36).slice(-8)}!2026`;
-        const { data: createdStaff, error: createErr } = await adminClient.auth.admin.createUser({
-          email: cleanEmail,
-          password: tempPassword,
-          email_confirm: false,
-          user_metadata: {
+      if (linkData?.user) {
+        createdUserId = linkData.user.id;
+        inviteLink = linkData.properties?.action_link || null;
+        inviteSent = true;
+      } else {
+        // Fallback: inviteUserByEmail
+        const { data: inviteData, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(cleanEmail, {
+          redirectTo,
+          data: {
             full_name: cleanName,
             name: cleanName,
             phone: cleanPhone,
@@ -132,12 +139,10 @@ export async function POST(req: Request) {
           },
         });
 
-        if (createErr || !createdStaff?.user) {
-          const safeMsg = sanitizeErrorMessage(createErr || inviteErr, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
+        if (inviteErr) {
+          const safeMsg = sanitizeErrorMessage(inviteErr || linkErr, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
           return createSafeErrorResponse(safeMsg, API_ERROR_CODES.VALIDATION_ERROR, 400);
         }
-        createdUserId = createdStaff.user.id;
-      } else {
         createdUserId = inviteData.user.id;
         inviteSent = true;
       }
@@ -193,9 +198,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: inviteSent 
-        ? `Invitation email sent to ${cleanEmail} as ${assignedRole.toUpperCase()}.`
-        : `Staff profile for ${cleanName} (${assignedRole.toUpperCase()}) registered. An invitation link was prepared.`,
+      message: `Invitation generated for ${cleanName} as ${assignedRole.toUpperCase()}.`,
+      inviteLink,
       member: {
         id: createdUserId,
         full_name: cleanName,
