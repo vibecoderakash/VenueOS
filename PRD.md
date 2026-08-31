@@ -589,6 +589,7 @@ Completed UI improvements include:
 - Calendar icon visibility in both themes
 - Premium themed select fields
 - Better setup form labels/helper text
+- Cleaner lead cards without an unnecessary divider above follow-up actions
 - Removal of intentional venue defaults from setup fields
 - Reduced browser autofill interference
 - Improved invalid/unlinked-session loading behavior

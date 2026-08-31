@@ -215,9 +215,6 @@ export function LeadList({ leads, onResetFilters }: LeadListProps) {
               {/* Right Action & Follow-up Block */}
               <div
                 className="flex flex-row lg:flex-col items-end justify-between lg:justify-center gap-2 flex-shrink-0 pt-2 lg:pt-0"
-                style={{
-                  borderTop: '1px solid var(--border)',
-                }}
               >
                 {/* Follow-up Status Badge */}
                 <div className="flex items-center gap-1">
