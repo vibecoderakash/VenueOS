@@ -110,6 +110,8 @@ The previously created test venue account was deleted successfully.
 
 The application is currently expected to show the **fresh setup flow** when there is no valid configured venue/session.
 
+The server-side account-status diagnostic has been verified in local development: an unregistered email is identified as missing, while a registered Auth email is identified as existing. The service-role key is server-only and is never exposed to the browser.
+
 To start development locally:
 
 ```bash
