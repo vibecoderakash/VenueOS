@@ -23,6 +23,7 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { createBrowserClient } from '@/lib/supabase/client';
 import { Profile, UserRole } from '@/types/database';
+import { StaffSelfProfile } from './staff-self-profile';
 
 const ROLE_LABELS: Record<string, string> = {
   owner: 'Owner',
@@ -79,7 +80,9 @@ export function TeamManagement() {
   };
 
   // Helper for authenticated headers
-  const getAuthHeaders = async (forceRefresh = false) => {
+  // Refresh before protected requests so a tab that has been open for a while
+  // does not send an expired access token to the staff API.
+  const getAuthHeaders = async (forceRefresh = true) => {
     const supabase = createBrowserClient();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -359,24 +362,25 @@ export function TeamManagement() {
   // Staff permission guard (only block when user is confirmed NOT owner and NOT manager)
   if (currentUser && !isOwner && !isManager) {
     return (
-      <div className="p-8 max-w-4xl mx-auto">
+      <div className="p-8 max-w-4xl mx-auto space-y-6">
         <div
-          className="rounded-2xl p-8 text-center space-y-4 border"
+          className="rounded-2xl p-5 border flex items-start gap-4"
           style={{
             backgroundColor: 'var(--surface)',
             borderColor: 'var(--border)',
           }}
         >
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto">
-            <ShieldAlert className="w-7 h-7" />
+          <div className="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
+            <ShieldAlert className="w-5 h-5" />
           </div>
-          <h2 className="text-lg font-bold text-foreground">
-            Access Restricted
-          </h2>
-          <p className="text-sm text-foreground-secondary max-w-md mx-auto leading-relaxed">
-            Team account management is reserved for Venue Owners and General Managers. Please contact your administrator if you need permission changes.
-          </p>
+          <div>
+            <h2 className="text-base font-bold text-foreground">Access Restricted</h2>
+            <p className="text-sm text-foreground-secondary mt-1 leading-relaxed">
+              Team management is reserved for Venue Owners and General Managers. You can still update your own profile below.
+            </p>
+          </div>
         </div>
+        <StaffSelfProfile />
       </div>
     );
   }

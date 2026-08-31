@@ -65,6 +65,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const { profile: authProfile, isAuthenticated: authIsAuthenticated } = useAuth();
 
+  const assertCanMutate = () => {
+    if (authProfile && (authProfile.is_active === false || authProfile.active === false)) {
+      throw new Error('Your account is inactive. You can view data, but you cannot make changes.');
+    }
+  };
+
   // Business data is loaded from Supabase only. Browser storage is intentionally not used here.
   useEffect(() => {
     let cancelled = false;
@@ -115,6 +121,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateOrganization = async (updates: Partial<Organization>): Promise<Organization> => {
+    assertCanMutate();
     const updated: Organization = {
       ...organization,
       ...updates,
@@ -135,6 +142,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateProfiles = (newProfiles: Profile[]) => {
+    if (authProfile?.is_active === false || authProfile?.active === false) return;
     saveProfiles(newProfiles);
   };
 
@@ -299,6 +307,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const createLead = async (input: CreateLeadInput): Promise<Lead> => {
+    assertCanMutate();
     // Validate with strict schema
     const validated = createLeadSchema.parse(input);
 
@@ -434,6 +443,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateLead = async (leadId: string, updates: Partial<Lead>): Promise<Lead> => {
+    assertCanMutate();
     const current = leads.find((l) => l.id === leadId);
     if (!current) throw new Error('Lead not found');
 
@@ -459,6 +469,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addDiscussion = async (leadId: string, input: AddDiscussionInput): Promise<LeadDiscussion> => {
+    assertCanMutate();
     const nowIso = new Date().toISOString();
     const currentLead = leads.find((l) => l.id === leadId);
     if (!currentLead) throw new Error('Lead not found');
@@ -539,6 +550,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteDiscussion = async (leadId: string, discussionId: string): Promise<void> => {
+    assertCanMutate();
     const list = discussions[leadId] || [];
     const supabase = createBrowserClient();
     if (!supabase) throw new Error('Supabase session is not ready');
@@ -552,6 +564,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const editDiscussion = async (leadId: string, discussionId: string, newBody: string): Promise<void> => {
+    assertCanMutate();
     const list = discussions[leadId] || [];
     const supabase = createBrowserClient();
     if (!supabase) throw new Error('Supabase session is not ready');
@@ -575,6 +588,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     nextFollowUpAt: string | null,
     note?: string | null
   ): Promise<void> => {
+    assertCanMutate();
     const current = leads.find((l) => l.id === leadId);
     if (!current) return;
 
@@ -598,6 +612,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateStatus = async (leadId: string, newStatus: LeadStatus): Promise<void> => {
+    assertCanMutate();
     const current = leads.find((l) => l.id === leadId);
     if (!current || current.status === newStatus) return;
 
@@ -621,6 +636,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updatePriority = async (leadId: string, newPriority: LeadPriority): Promise<void> => {
+    assertCanMutate();
     const current = leads.find((l) => l.id === leadId);
     if (!current || current.priority === newPriority) return;
 
@@ -644,6 +660,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const assignLead = async (leadId: string, ownerId: string | null): Promise<void> => {
+    assertCanMutate();
     const current = leads.find((l) => l.id === leadId);
     if (!current || current.owner_id === ownerId || !ownerId) return;
 
@@ -680,6 +697,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const archiveLead = async (leadId: string): Promise<void> => {
+    assertCanMutate();
     const nowIso = new Date().toISOString();
     const updatedList = leads.map((l) =>
       l.id === leadId
@@ -696,6 +714,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const restoreLead = async (leadId: string): Promise<void> => {
+    assertCanMutate();
     const nowIso = new Date().toISOString();
     const updatedList = leads.map((l) =>
       l.id === leadId

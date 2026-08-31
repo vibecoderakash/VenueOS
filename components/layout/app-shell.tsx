@@ -12,7 +12,7 @@ const PUBLIC_ROUTES = ['/login', '/setup', '/forgot-password', '/reset-password'
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, authStatus, authError, retryAuth } = useAuth();
+  const { isAuthenticated, authStatus, authError, retryAuth, profile } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -122,6 +122,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         style={{ backgroundColor: 'var(--background)' }}
       >
         <Header />
+        {(profile?.is_active === false || profile?.active === false) && (
+          <div className="mx-4 sm:mx-6 mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-600 dark:text-amber-300">
+            This account is inactive. You can view venue data, but changes are disabled until an administrator reactivates your account.
+          </div>
+        )}
         <main className="flex-1 p-4 sm:p-6 lg:p-7 max-w-[1400px] w-full mx-auto">
           {children}
         </main>

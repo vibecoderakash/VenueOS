@@ -62,12 +62,12 @@ function BusinessProfile() {
 
   // Current saved values (source of truth from DataContext & Owner details)
   const savedValues = React.useMemo(() => ({
-    name: organization.name || 'The Grand Imperial Banquet',
+    name: organization.name || 'No venue connected',
     phone: organization.phone || currentAuthProfile?.phone || '',
     email: organization.email || currentAuthProfile?.email || '',
     address: organization.address || '',
     city: organization.city || '',
-    currency: organization.currency || 'INR',
+    currency: organization.currency || '—',
   }), [organization, currentAuthProfile]);
 
   // Draft values (while editing)
@@ -137,6 +137,7 @@ function BusinessProfile() {
   };
 
   const handleConfirm = async () => {
+    if (!isOwner) return;
     // Apply changes into persistent DataContext and LocalStorage
     await updateOrganization({
       name: draft.name,
@@ -212,7 +213,7 @@ function BusinessProfile() {
                 Updated
               </span>
             )}
-            {!isEditing && (
+            {!isEditing && isOwner && (
               <button
                 type="button"
                 onClick={handleEdit}
@@ -236,6 +237,11 @@ function BusinessProfile() {
                 <Pencil className="w-3.5 h-3.5" />
                 Edit
               </button>
+            )}
+            {!isEditing && !isOwner && (
+              <span className="text-[12px] font-medium px-2.5 py-1 rounded-full" style={{ color: 'var(--foreground-muted)', backgroundColor: 'var(--surface-secondary)', border: '1px solid var(--border)' }}>
+                View only
+              </span>
             )}
           </div>
         </div>

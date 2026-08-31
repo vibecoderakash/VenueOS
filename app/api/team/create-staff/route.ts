@@ -179,6 +179,14 @@ export async function POST(req: Request) {
         });
 
       if (profileErr) {
+        // Auth creation and profile creation are separate Supabase APIs. If
+        // the profile write fails, remove the newly-created Auth identity so
+        // retries cannot leave an orphan user behind.
+        if (adminClient && createdUserId) {
+          await adminClient.auth.admin.deleteUser(createdUserId).catch((cleanupError) => {
+            console.error('Failed to clean up orphan staff Auth user:', cleanupError);
+          });
+        }
         const safeMsg = sanitizeErrorMessage(profileErr, SAFE_IDENTITY_ERRORS.EMAIL_ALREADY_EXISTS);
         return createSafeErrorResponse(safeMsg, API_ERROR_CODES.CONFLICT_EMAIL_EXISTS, 409);
       }

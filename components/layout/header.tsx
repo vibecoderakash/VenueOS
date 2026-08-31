@@ -12,6 +12,7 @@ import {
   Monitor,
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
+import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
 import { CreateLeadModal } from '@/components/leads/create-lead-modal';
 import Link from 'next/link';
@@ -24,6 +25,7 @@ import { cn } from '@/lib/utils';
 export function Header() {
   const router = useRouter();
   const { metrics } = useData();
+  const { profile } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
@@ -51,6 +53,7 @@ export function Header() {
   ];
 
   const ActiveThemeIcon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor;
+  const isReadOnly = profile?.is_active === false || profile?.active === false;
 
   return (
     <>
@@ -187,6 +190,8 @@ export function Header() {
           {/* New Lead — Primary CTA */}
           <button
             onClick={() => setIsCreateOpen(true)}
+            disabled={isReadOnly}
+            title={isReadOnly ? 'Your account is inactive and cannot make changes.' : 'Create a new lead'}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[13px] font-semibold transition-colors"
             style={{
               backgroundColor: 'var(--primary)',

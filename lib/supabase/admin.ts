@@ -53,7 +53,15 @@ export async function getVerifiedCaller(req: Request): Promise<{
   const authHeader = req.headers.get('authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.replace('Bearer ', '').trim();
-    const { data: tokenUser, error: tokenErr } = await supabase.auth.getUser(token);
+    // Verify API bearer tokens with a stateless client. The SSR client is
+    // cookie-oriented and can otherwise retain an empty/stale auth state when
+    // a route is called with an Authorization header.
+    const tokenClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    const { data: tokenUser, error: tokenErr } = await tokenClient.auth.getUser(token);
     if (!tokenErr && tokenUser?.user) {
       user = tokenUser.user;
     }

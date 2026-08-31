@@ -86,7 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .maybeSingle();
 
         if (error) {
-          console.warn('Profile fetch note:', error.message);
+          console.warn('Profile fetch failed:', error.message);
+          return null;
         }
 
         const meta = authUser?.user_metadata || userRef.current?.user_metadata || {};
@@ -132,41 +133,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return normalizedProfile;
         }
 
-        // If profile row does not exist yet, build from metadata
+        // A valid application session requires a database profile. Never
+        // authenticate an orphan Auth user from metadata alone.
         if (authUser) {
-          const fallback = createProfileFromUser(authUser);
-          setProfile(fallback);
-          return fallback;
-        }
-
-        if (userEmail) {
-          const cleanEmail = userEmail.toLowerCase().trim();
-          const fallbackRole = ((meta.role as UserRole) || 'sales');
-          const fallbackName = (meta.full_name as string) || (meta.name as string) || cleanEmail.split('@')[0];
-          const fallbackProfile: Profile = {
-            id: userId,
-            full_name: fallbackName,
-            name: fallbackName,
-            email: cleanEmail,
-            phone: (meta.phone as string) || null,
-            role: fallbackRole,
-            is_active: true,
-            active: true,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-          setProfile(fallbackProfile);
-          return fallbackProfile;
+          setProfile(null);
+          return null;
         }
 
         return null;
       } catch (err) {
-        console.warn('Profile fetch error, using auth user fallback:', err);
-        if (authUser) {
-          const fallback = createProfileFromUser(authUser);
-          setProfile(fallback);
-          return fallback;
-        }
+        console.warn('Profile fetch failed; refusing an unverified session:', err);
+        setProfile(null);
         return null;
       }
     },
@@ -225,11 +202,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       } catch (err) {
         console.error('Session processing error:', err);
-        // If user session exists, authenticate with metadata profile rather than crashing
-        setUser(session.user);
-        setProfile(createProfileFromUser(session.user));
-        setAuthStatus('authenticated');
-        return true;
+        // Never allow an Auth session without a verified database profile into
+        // the application after an organization has been deleted.
+        const supabase = createBrowserClient();
+        if (supabase) await supabase.auth.signOut().catch(() => {});
+        setUser(null);
+        setProfile(null);
+        setAuthStatus('unauthenticated');
+        setAuthError('Your account could not be linked to a venue. Please contact an administrator.');
+        return false;
       }
     },
     [createProfileFromUser, fetchProfile]
