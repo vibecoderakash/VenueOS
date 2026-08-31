@@ -38,6 +38,9 @@ async function runTests() {
   const testPhoneShort = createLeadSchema.safeParse({ ...validBase, phone: '987654321' });
   assert('TEST 1A: Phone number with 9 digits is rejected', !testPhoneShort.success);
 
+  const testPhoneLong = createLeadSchema.safeParse({ ...validBase, phone: '98765432101' });
+  assert('TEST 1A2: Phone number with 11 digits is rejected', !testPhoneLong.success);
+
   const testPhoneLetters = createLeadSchema.safeParse({ ...validBase, phone: '98765abc10' });
   assert('TEST 1B: Phone number containing letters is rejected', !testPhoneLetters.success);
 
