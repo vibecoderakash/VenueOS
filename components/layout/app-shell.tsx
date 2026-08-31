@@ -123,7 +123,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <Header />
         {(profile?.is_active === false || profile?.active === false) && (
-          <div className="mx-4 sm:mx-6 mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-600 dark:text-red-300">
+          <div className="mx-4 sm:mx-6 mt-3 rounded-lg border border-red-800 bg-red-950 px-4 py-2.5 text-sm font-bold text-white">
             This account is inactive. You can view venue data, but changes are disabled until an administrator reactivates your account.
           </div>
         )}
