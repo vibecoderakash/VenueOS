@@ -326,6 +326,7 @@ The current lead form supports:
 - The user must explicitly select Save to persist a new or changed follow-up.
 - Cancel discards shortcut or manual edits and restores the currently saved follow-up.
 - Saving a follow-up requires both a valid date/time and a non-empty action note; the database enforces the same rule.
+- Follow-up date/time is displayed consistently as `DD/MM/YYYY HH:MM`, independent of the browser or operating-system locale, while retaining the native date-time picker.
 
 ## 8.3 Implemented Lead Operations
 
