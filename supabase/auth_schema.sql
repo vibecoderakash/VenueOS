@@ -67,31 +67,28 @@ CREATE INDEX IF NOT EXISTS idx_profiles_is_active ON public.profiles(is_active);
 -- 4. Enable Row Level Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- 5. RLS Policies
+-- 5. RLS Policies & Secure Functions
 DROP POLICY IF EXISTS "Authenticated users can read profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Public can view profile count for setup check" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view profiles in their organization" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update own personal details" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Owners and managers can manage team profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Admins and Owners can manage organization profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Allow insert profile during setup" ON public.profiles;
 
--- Anyone authenticated can view active profiles (needed to display owner, team members, and assignees)
-CREATE POLICY "Authenticated users can read profiles"
-    ON public.profiles FOR SELECT
-    TO authenticated
-    USING (true);
-
--- Allow public check if owner exists (for /setup page access validation)
-CREATE POLICY "Public can view profile count for setup check"
-    ON public.profiles FOR SELECT
-    TO anon
-    USING (role = 'owner');
-
--- Users can update their own personal info (name, phone)
-CREATE POLICY "Users can update own personal details"
-    ON public.profiles FOR UPDATE
-    TO authenticated
-    USING (auth.uid() = id)
-    WITH CHECK (auth.uid() = id);
+-- Helper function to fetch current authenticated user's organization_id safely
+CREATE OR REPLACE FUNCTION public.get_auth_org_id()
+RETURNS UUID AS $$
+BEGIN
+    RETURN (
+        SELECT organization_id 
+        FROM public.profiles 
+        WHERE id = auth.uid() 
+        LIMIT 1
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
 -- Helper function to fetch role without triggering RLS recursion
 CREATE OR REPLACE FUNCTION public.get_auth_role()
@@ -107,17 +104,49 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
--- Owners and Managers can insert/update other staff profiles
-CREATE POLICY "Owners and managers can manage team profiles"
+-- Check if an Owner account exists safely without exposing PII to unauthenticated clients
+CREATE OR REPLACE FUNCTION public.check_has_owner()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 
+    FROM public.profiles 
+    WHERE role = 'owner' AND organization_id IS NOT NULL
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.check_has_owner() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.check_has_owner() TO anon, authenticated;
+
+-- Users can only view profiles within their own organization or their own profile
+CREATE POLICY "Users can view profiles in their organization"
+    ON public.profiles FOR SELECT
+    TO authenticated
+    USING (
+        organization_id = public.get_auth_org_id() 
+        OR id = auth.uid()
+    );
+
+-- Users can update their own personal info (name, phone)
+CREATE POLICY "Users can update own personal details"
+    ON public.profiles FOR UPDATE
+    TO authenticated
+    USING (id = auth.uid())
+    WITH CHECK (id = auth.uid());
+
+-- Owners and Admins can manage other team profiles in their organization
+CREATE POLICY "Admins and Owners can manage organization profiles"
     ON public.profiles FOR ALL
     TO authenticated
-    USING (public.get_auth_role() IN ('owner', 'manager', 'admin'));
-
--- Allow profile insert during sign-up trigger
-CREATE POLICY "Allow insert profile during setup"
-    ON public.profiles FOR INSERT
-    TO anon, authenticated
-    WITH CHECK (true);
+    USING (
+        organization_id = public.get_auth_org_id() 
+        AND public.get_auth_role() IN ('owner', 'admin')
+    );
 
 -- 6. Trigger: Automatically insert profile when a new user signs up in auth.users
 CREATE OR REPLACE FUNCTION public.handle_new_user()

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLeadSchema } from '@/lib/validations/lead';
 import { createClient } from '@/lib/supabase/server';
+import { createSafeErrorResponse, API_ERROR_CODES, sanitizeErrorMessage } from '@/lib/validations/identity';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
 
     // 1. Strict Backend Validation with Zod (Security & Data Integrity Boundary)
     const parseResult = createLeadSchema.safeParse(body);
@@ -13,6 +16,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: 'Validation failed',
+          code: API_ERROR_CODES.VALIDATION_ERROR,
           message: parseResult.error.errors[0]?.message || 'Invalid lead data provided.',
           fieldErrors: formattedErrors.fieldErrors,
         },
@@ -42,7 +46,7 @@ export async function POST(req: NextRequest) {
           : await supabase.auth.getUser();
 
         if (!user) {
-          return NextResponse.json({ error: 'Supabase session was not found by the server.' }, { status: 401 });
+          return createSafeErrorResponse('Supabase session was not found by the server.', API_ERROR_CODES.UNAUTHORIZED, 401);
         }
 
         if (user) {
@@ -53,9 +57,10 @@ export async function POST(req: NextRequest) {
             .maybeSingle();
 
           if (profileError || !profile?.organization_id) {
-            return NextResponse.json(
-              { error: 'Your profile is not connected to an organization in Supabase.' },
-              { status: 403 }
+            return createSafeErrorResponse(
+              'Your profile is not connected to an organization in Supabase.',
+              API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE,
+              403
             );
           }
 
@@ -66,7 +71,11 @@ export async function POST(req: NextRequest) {
               : true;
 
           if (!isActive) {
-            return NextResponse.json({ error: 'Your account is inactive.' }, { status: 403 });
+            return createSafeErrorResponse(
+              'Your account is inactive.',
+              API_ERROR_CODES.FORBIDDEN_DEACTIVATED,
+              403
+            );
           }
 
           const { data: lead, error } = await supabase
@@ -98,23 +107,23 @@ export async function POST(req: NextRequest) {
           if (!error && lead) {
             return NextResponse.json({ lead, success: true }, { status: 201 });
           }
-          return NextResponse.json(
-            { error: error?.message || 'Supabase rejected the lead insert.', code: error?.code },
-            { status: 400 }
-          );
+          
+          const safeError = sanitizeErrorMessage(error, 'Supabase rejected the lead insert.');
+          return createSafeErrorResponse(safeError, API_ERROR_CODES.VALIDATION_ERROR, 400);
         }
       } catch (error) {
         console.error('Supabase lead creation failed:', error);
       }
     }
 
-    return NextResponse.json(
-      { error: 'Unable to save lead to Supabase. Please verify your organization and profile setup.' },
-      { status: 503 }
+    return createSafeErrorResponse(
+      'Unable to save lead to Supabase. Please verify your organization and profile setup.',
+      API_ERROR_CODES.DATABASE_UNAVAILABLE,
+      503
     );
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return createSafeErrorResponse(message, API_ERROR_CODES.INTERNAL_ERROR, 500);
   }
 }
 

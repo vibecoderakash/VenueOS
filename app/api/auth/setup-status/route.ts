@@ -13,6 +13,14 @@ export async function GET() {
       );
     }
 
+    // 1. Preferred Secure RPC: Returns boolean without exposing profile rows
+    const { data: rpcData, error: rpcError } = await supabase.rpc('check_has_owner');
+    
+    if (!rpcError && typeof rpcData === 'boolean') {
+      return NextResponse.json({ ownerExists: rpcData }, { status: 200 });
+    }
+
+    // 2. Safe Fallback: Direct query checking for existing owner
     const { data, error } = await supabase
       .from('profiles')
       .select('id')
@@ -21,7 +29,7 @@ export async function GET() {
       .limit(1);
 
     if (error) {
-      console.warn('Setup status query note:', error.message);
+      console.warn('Setup status check note:', error.message);
       return NextResponse.json({ ownerExists: false }, { status: 200 });
     }
 

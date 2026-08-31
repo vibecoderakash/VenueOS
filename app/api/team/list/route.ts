@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import { getVerifiedCaller } from '@/lib/supabase/admin';
-import { SAFE_IDENTITY_ERRORS, sanitizeErrorMessage } from '@/lib/validations/identity';
+import { 
+  SAFE_IDENTITY_ERRORS, 
+  sanitizeErrorMessage, 
+  createSafeErrorResponse, 
+  API_ERROR_CODES 
+} from '@/lib/validations/identity';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,30 +15,37 @@ export async function GET(req: Request) {
     // 1. Authenticate caller and resolve database permissions
     const { caller, error: authError, statusCode } = await getVerifiedCaller(req);
     if (authError || !caller) {
-      return NextResponse.json(
-        { error: authError || SAFE_IDENTITY_ERRORS.UNAUTHORIZED },
-        { status: statusCode || 401 }
+      return createSafeErrorResponse(
+        authError || SAFE_IDENTITY_ERRORS.UNAUTHORIZED,
+        API_ERROR_CODES.UNAUTHORIZED,
+        statusCode || 401
       );
     }
 
     if (!caller.isActive) {
-      return NextResponse.json(
-        { error: SAFE_IDENTITY_ERRORS.FORBIDDEN_DEACTIVATED },
-        { status: 403 }
+      return createSafeErrorResponse(
+        SAFE_IDENTITY_ERRORS.FORBIDDEN_DEACTIVATED,
+        API_ERROR_CODES.FORBIDDEN_DEACTIVATED,
+        403
       );
     }
 
     const callerRole = caller.role;
     if (callerRole !== 'owner' && callerRole !== 'manager' && callerRole !== 'admin') {
-      return NextResponse.json(
-        { error: SAFE_IDENTITY_ERRORS.INSUFFICIENT_PERMISSIONS },
-        { status: 403 }
+      return createSafeErrorResponse(
+        SAFE_IDENTITY_ERRORS.INSUFFICIENT_PERMISSIONS,
+        API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE,
+        403
       );
     }
 
     const supabase = await createServerSupabaseClient();
     if (!supabase) {
-      return NextResponse.json({ error: SAFE_IDENTITY_ERRORS.DATABASE_UNAVAILABLE }, { status: 500 });
+      return createSafeErrorResponse(
+        SAFE_IDENTITY_ERRORS.DATABASE_UNAVAILABLE,
+        API_ERROR_CODES.DATABASE_UNAVAILABLE,
+        500
+      );
     }
 
     const { data: members, error: membersError } = await supabase
@@ -44,7 +56,7 @@ export async function GET(req: Request) {
 
     if (membersError) {
       const safeMsg = sanitizeErrorMessage(membersError, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
-      return NextResponse.json({ error: safeMsg }, { status: 500 });
+      return createSafeErrorResponse(safeMsg, API_ERROR_CODES.INTERNAL_ERROR, 500);
     }
 
     const normalizedMembers = (members || []).map((m) => ({
@@ -63,6 +75,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ members: normalizedMembers });
   } catch (err) {
     const safeError = sanitizeErrorMessage(err, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
-    return NextResponse.json({ error: safeError }, { status: 500 });
+    return createSafeErrorResponse(safeError, API_ERROR_CODES.INTERNAL_ERROR, 500);
   }
 }

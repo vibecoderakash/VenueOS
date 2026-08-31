@@ -1,7 +1,26 @@
+import { NextResponse } from 'next/server';
+
 /**
- * Backend Identity Validation & Safe Error Utilities
- * Venue OS - Single Account per Normalized Email Enforcer
+ * Backend Identity Validation, Standardized Error Codes & Safe Error Utilities
+ * Venue OS - Single Account per Normalized Email & Multi-Tenant Security Enforcer
  */
+
+/**
+ * Standardized API Error Codes for consistent client handling
+ */
+export const API_ERROR_CODES = {
+  UNAUTHORIZED: 'AUTH_UNAUTHORIZED',
+  FORBIDDEN_INSUFFICIENT_ROLE: 'FORBIDDEN_INSUFFICIENT_ROLE',
+  FORBIDDEN_DEACTIVATED: 'FORBIDDEN_DEACTIVATED',
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  RESOURCE_NOT_FOUND: 'RESOURCE_NOT_FOUND',
+  CONFLICT_EMAIL_EXISTS: 'CONFLICT_EMAIL_EXISTS',
+  CONFLICT_OWNER_EXISTS: 'CONFLICT_OWNER_EXISTS',
+  DATABASE_UNAVAILABLE: 'DATABASE_UNAVAILABLE',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+} as const;
+
+export type ApiErrorCode = typeof API_ERROR_CODES[keyof typeof API_ERROR_CODES];
 
 /**
  * Normalizes an email address according to the strict rule:
@@ -38,12 +57,12 @@ export const SAFE_IDENTITY_ERRORS = {
   INVALID_NAME: 'Please enter a valid full name (minimum 2 characters).',
   UNAUTHORIZED: 'You are not authorized to perform this operation.',
   FORBIDDEN_DEACTIVATED: 'Your account has been deactivated. Please contact your venue administrator.',
-  INSUFFICIENT_PERMISSIONS: 'You do not have permission to manage team accounts.',
+  INSUFFICIENT_PERMISSIONS: 'You do not have permission to perform this operation.',
   INVALID_ROLE_SELECTION: 'You do not have authorization to assign the requested role.',
   OWNER_ALREADY_EXISTS: 'A Venue Owner account has already been registered for this venue.',
   OWNER_DEACTIVATION_FORBIDDEN: 'The Venue Owner account cannot be deactivated.',
   MEMBER_NOT_FOUND: 'The specified team member could not be found.',
-  DATABASE_UNAVAILABLE: 'Authentication service is temporarily unavailable. Please try again shortly.',
+  DATABASE_UNAVAILABLE: 'Database service is temporarily unavailable. Please try again shortly.',
   GENERIC_ERROR: 'An error occurred while processing your request. Please try again.',
 } as const;
 
@@ -91,4 +110,56 @@ export function sanitizeErrorMessage(err: unknown, fallback: string = SAFE_IDENT
   }
 
   return fallback;
+}
+
+/**
+ * Maps an error or message to a standardized API error code.
+ */
+export function resolveApiErrorCode(err: unknown): ApiErrorCode {
+  if (!err) return API_ERROR_CODES.INTERNAL_ERROR;
+  const rawMsg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+
+  if (rawMsg.includes('23505') || rawMsg.includes('duplicate key') || rawMsg.includes('already exists')) {
+    if (rawMsg.includes('owner')) return API_ERROR_CODES.CONFLICT_OWNER_EXISTS;
+    return API_ERROR_CODES.CONFLICT_EMAIL_EXISTS;
+  }
+  if (rawMsg.includes('unauthorized') || rawMsg.includes('sign in') || rawMsg.includes('session was not found')) {
+    return API_ERROR_CODES.UNAUTHORIZED;
+  }
+  if (rawMsg.includes('deactivated')) {
+    return API_ERROR_CODES.FORBIDDEN_DEACTIVATED;
+  }
+  if (rawMsg.includes('permission') || rawMsg.includes('forbidden') || rawMsg.includes('only the') || rawMsg.includes('manager')) {
+    return API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE;
+  }
+  if (rawMsg.includes('not found')) {
+    return API_ERROR_CODES.RESOURCE_NOT_FOUND;
+  }
+  if (rawMsg.includes('validation') || rawMsg.includes('invalid') || rawMsg.includes('required')) {
+    return API_ERROR_CODES.VALIDATION_ERROR;
+  }
+  if (rawMsg.includes('database') || rawMsg.includes('unconfigured') || rawMsg.includes('unavailable')) {
+    return API_ERROR_CODES.DATABASE_UNAVAILABLE;
+  }
+
+  return API_ERROR_CODES.INTERNAL_ERROR;
+}
+
+/**
+ * Standardized Safe JSON Error Response builder
+ */
+export function createSafeErrorResponse(
+  error: string,
+  code: ApiErrorCode = API_ERROR_CODES.INTERNAL_ERROR,
+  status: number = 500,
+  details?: unknown
+) {
+  return NextResponse.json(
+    {
+      error,
+      code,
+      ...(details ? { details } : {}),
+    },
+    { status }
+  );
 }

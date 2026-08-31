@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import { checkEmailExists } from '@/lib/supabase/admin';
-import { normalizeEmail, isValidEmail, SAFE_IDENTITY_ERRORS, sanitizeErrorMessage } from '@/lib/validations/identity';
+import { 
+  normalizeEmail, 
+  isValidEmail, 
+  SAFE_IDENTITY_ERRORS, 
+  sanitizeErrorMessage,
+  createSafeErrorResponse,
+  API_ERROR_CODES 
+} from '@/lib/validations/identity';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,48 +18,47 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json({ error: 'Invalid JSON payload.' }, { status: 400 });
+      return createSafeErrorResponse('Invalid JSON payload.', API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     const { full_name, email, phone, password, venue_name } = body;
 
     if (typeof venue_name !== 'string' || !venue_name.trim()) {
-      return NextResponse.json({ error: 'Banquet or venue name is required.' }, { status: 400 });
+      return createSafeErrorResponse('Banquet or venue name is required.', API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     // 1. Validation
     if (!full_name || typeof full_name !== 'string' || full_name.trim().length < 2) {
-      return NextResponse.json({ error: SAFE_IDENTITY_ERRORS.INVALID_NAME }, { status: 400 });
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.INVALID_NAME, API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     const cleanEmail = normalizeEmail(email);
     if (!cleanEmail || !isValidEmail(cleanEmail)) {
-      return NextResponse.json({ error: SAFE_IDENTITY_ERRORS.INVALID_EMAIL_FORMAT }, { status: 400 });
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.INVALID_EMAIL_FORMAT, API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     if (!password || typeof password !== 'string' || password.length < 8) {
-      return NextResponse.json(
-        { error: 'Password must be at least 8 characters long.' },
-        { status: 400 }
-      );
+      return createSafeErrorResponse('Password must be at least 8 characters long.', API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     const cleanName = full_name.trim();
     const cleanPhone = typeof phone === 'string' ? phone.trim() : '';
 
     if (!cleanPhone) {
-      return NextResponse.json({ error: 'Phone number is required.' }, { status: 400 });
+      return createSafeErrorResponse('Phone number is required.', API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     const supabase = await createServerSupabaseClient();
     if (!supabase) {
-      return NextResponse.json(
-        { error: SAFE_IDENTITY_ERRORS.DATABASE_UNAVAILABLE },
-        { status: 500 }
-      );
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.DATABASE_UNAVAILABLE, API_ERROR_CODES.DATABASE_UNAVAILABLE, 500);
     }
 
-    // 2. Atomic check: Verify no Owner account exists
+    // 2. Atomic check: Verify no Owner account exists via RPC or query
+    const { data: rpcHasOwner, error: rpcErr } = await supabase.rpc('check_has_owner');
+    if (!rpcErr && rpcHasOwner === true) {
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.OWNER_ALREADY_EXISTS, API_ERROR_CODES.CONFLICT_OWNER_EXISTS, 403);
+    }
+
     const { data: existingOwners, error: queryError } = await supabase
       .from('profiles')
       .select('id')
@@ -65,19 +71,13 @@ export async function POST(req: Request) {
     }
 
     if (Array.isArray(existingOwners) && existingOwners.length > 0) {
-      return NextResponse.json(
-        { error: SAFE_IDENTITY_ERRORS.OWNER_ALREADY_EXISTS },
-        { status: 403 }
-      );
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.OWNER_ALREADY_EXISTS, API_ERROR_CODES.CONFLICT_OWNER_EXISTS, 403);
     }
 
     // 3. Email Uniqueness Pre-Check
     const alreadyExists = await checkEmailExists(cleanEmail);
     if (alreadyExists) {
-      return NextResponse.json(
-        { error: SAFE_IDENTITY_ERRORS.EMAIL_ALREADY_EXISTS },
-        { status: 409 }
-      );
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.EMAIL_ALREADY_EXISTS, API_ERROR_CODES.CONFLICT_EMAIL_EXISTS, 409);
     }
 
     // 4. Create User in Supabase Auth
@@ -97,17 +97,14 @@ export async function POST(req: Request) {
 
     if (authError) {
       if (authError.status === 409 || authError.status === 422) {
-        return NextResponse.json({ error: SAFE_IDENTITY_ERRORS.EMAIL_ALREADY_EXISTS }, { status: 409 });
+        return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.EMAIL_ALREADY_EXISTS, API_ERROR_CODES.CONFLICT_EMAIL_EXISTS, 409);
       }
       const safeMsg = sanitizeErrorMessage(authError, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
-      return NextResponse.json({ error: safeMsg }, { status: 400 });
+      return createSafeErrorResponse(safeMsg, API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     if (!authData.user) {
-      return NextResponse.json(
-        { error: 'Failed to create owner account in Supabase Auth.' },
-        { status: 500 }
-      );
+      return createSafeErrorResponse('Failed to create owner account in Supabase Auth.', API_ERROR_CODES.INTERNAL_ERROR, 500);
     }
 
     const userId = authData.user.id;
@@ -124,6 +121,6 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     const safeMsg = sanitizeErrorMessage(err, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
-    return NextResponse.json({ error: safeMsg }, { status: 500 });
+    return createSafeErrorResponse(safeMsg, API_ERROR_CODES.INTERNAL_ERROR, 500);
   }
 }

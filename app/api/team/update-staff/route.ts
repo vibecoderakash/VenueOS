@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import { getVerifiedCaller } from '@/lib/supabase/admin';
-import { SAFE_IDENTITY_ERRORS, sanitizeErrorMessage } from '@/lib/validations/identity';
+import { 
+  SAFE_IDENTITY_ERRORS, 
+  sanitizeErrorMessage,
+  createSafeErrorResponse,
+  API_ERROR_CODES 
+} from '@/lib/validations/identity';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,26 +15,29 @@ export async function PATCH(req: Request) {
     // 1. Authenticate caller and resolve database permissions
     const { caller, error: authError, statusCode } = await getVerifiedCaller(req);
     if (authError || !caller) {
-      return NextResponse.json(
-        { error: authError || SAFE_IDENTITY_ERRORS.UNAUTHORIZED },
-        { status: statusCode || 401 }
+      return createSafeErrorResponse(
+        authError || SAFE_IDENTITY_ERRORS.UNAUTHORIZED,
+        API_ERROR_CODES.UNAUTHORIZED,
+        statusCode || 401
       );
     }
 
     // 2. Validate caller active status
     if (!caller.isActive) {
-      return NextResponse.json(
-        { error: SAFE_IDENTITY_ERRORS.FORBIDDEN_DEACTIVATED },
-        { status: 403 }
+      return createSafeErrorResponse(
+        SAFE_IDENTITY_ERRORS.FORBIDDEN_DEACTIVATED,
+        API_ERROR_CODES.FORBIDDEN_DEACTIVATED,
+        403
       );
     }
 
     // 3. Authorize caller role
     const callerRole = caller.role;
     if (callerRole !== 'owner' && callerRole !== 'manager' && callerRole !== 'admin') {
-      return NextResponse.json(
-        { error: SAFE_IDENTITY_ERRORS.INSUFFICIENT_PERMISSIONS },
-        { status: 403 }
+      return createSafeErrorResponse(
+        SAFE_IDENTITY_ERRORS.INSUFFICIENT_PERMISSIONS,
+        API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE,
+        403
       );
     }
 
@@ -38,18 +46,18 @@ export async function PATCH(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json({ error: 'Invalid JSON request body.' }, { status: 400 });
+      return createSafeErrorResponse('Invalid JSON request body.', API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     const { memberId, full_name, phone, role, is_active } = body;
 
     if (!memberId || typeof memberId !== 'string') {
-      return NextResponse.json({ error: 'Target member ID is required.' }, { status: 400 });
+      return createSafeErrorResponse('Target member ID is required.', API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     const supabase = await createServerSupabaseClient();
     if (!supabase) {
-      return NextResponse.json({ error: SAFE_IDENTITY_ERRORS.DATABASE_UNAVAILABLE }, { status: 500 });
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.DATABASE_UNAVAILABLE, API_ERROR_CODES.DATABASE_UNAVAILABLE, 500);
     }
 
     // 5. Fetch target member profile from database
@@ -60,47 +68,48 @@ export async function PATCH(req: Request) {
       .maybeSingle();
 
     if (targetError || !targetProfile) {
-      return NextResponse.json({ error: SAFE_IDENTITY_ERRORS.MEMBER_NOT_FOUND }, { status: 404 });
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.MEMBER_NOT_FOUND, API_ERROR_CODES.RESOURCE_NOT_FOUND, 404);
+    }
+
+    // Ensure member belongs to the same organization
+    if (targetProfile.organization_id && targetProfile.organization_id !== caller.profile.organization_id) {
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.INSUFFICIENT_PERMISSIONS, API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE, 403);
     }
 
     // 6. Security constraints & role elevation prevention
     // Owner cannot deactivate themselves
     if (targetProfile.id === caller.user.id && is_active === false) {
-      return NextResponse.json(
-        { error: SAFE_IDENTITY_ERRORS.OWNER_DEACTIVATION_FORBIDDEN },
-        { status: 400 }
+      return createSafeErrorResponse(
+        SAFE_IDENTITY_ERRORS.OWNER_DEACTIVATION_FORBIDDEN,
+        API_ERROR_CODES.VALIDATION_ERROR,
+        400
       );
     }
 
     // Never allow promoting anyone to Owner
     if (role === 'owner' && targetProfile.role !== 'owner') {
-      return NextResponse.json(
-        { error: 'Cannot promote another user to Owner.' },
-        { status: 400 }
-      );
+      return createSafeErrorResponse('Cannot promote another user to Owner.', API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     // Users cannot change their own role
     if (targetProfile.id === caller.user.id && role !== undefined && role !== targetProfile.role) {
-      return NextResponse.json(
-        { error: 'You cannot change your own role.' },
-        { status: 400 }
-      );
+      return createSafeErrorResponse('You cannot change your own role.', API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     // Manager restrictions:
-    // Managers cannot modify Owners or other Managers, and can only assign 'staff' role
     if (callerRole === 'manager') {
       if (targetProfile.role === 'owner' || targetProfile.role === 'manager' || targetProfile.role === 'admin') {
-        return NextResponse.json(
-          { error: 'Managers cannot modify Owner or Manager profiles.' },
-          { status: 403 }
+        return createSafeErrorResponse(
+          'Managers cannot modify Owner or Manager profiles.',
+          API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE,
+          403
         );
       }
       if (role && role !== 'staff') {
-        return NextResponse.json(
-          { error: 'Managers can only assign the Staff role.' },
-          { status: 403 }
+        return createSafeErrorResponse(
+          'Managers can only assign the Staff role.',
+          API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE,
+          403
         );
       }
     }
@@ -119,7 +128,6 @@ export async function PATCH(req: Request) {
       updates.phone = phone ? String(phone).trim() : null;
     }
 
-    // Only owner/admin can change role to manager or staff
     if (role !== undefined && (callerRole === 'owner' || callerRole === 'admin')) {
       if (['manager', 'staff'].includes(String(role).toLowerCase())) {
         updates.role = String(role).toLowerCase();
@@ -141,7 +149,7 @@ export async function PATCH(req: Request) {
 
     if (updateError) {
       const safeMsg = sanitizeErrorMessage(updateError, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
-      return NextResponse.json({ error: safeMsg }, { status: 500 });
+      return createSafeErrorResponse(safeMsg, API_ERROR_CODES.INTERNAL_ERROR, 500);
     }
 
     return NextResponse.json({
@@ -151,6 +159,6 @@ export async function PATCH(req: Request) {
     });
   } catch (err) {
     const safeError = sanitizeErrorMessage(err, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
-    return NextResponse.json({ error: safeError }, { status: 500 });
+    return createSafeErrorResponse(safeError, API_ERROR_CODES.INTERNAL_ERROR, 500);
   }
 }

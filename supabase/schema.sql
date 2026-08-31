@@ -175,7 +175,7 @@ CREATE TABLE IF NOT EXISTS public.lead_discussions (
     lead_id UUID NOT NULL REFERENCES public.leads(id) ON DELETE CASCADE,
     author_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     body TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
 -- 7. LEAD ASSIGNMENT HISTORY TABLE
@@ -430,3 +430,115 @@ BEGIN
             jsonb_build_object('assigned_from', v_current_owner, 'assigned_to', p_assigned_to));
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 13. SYSTEM AUDIT LOGS TABLE & POLICIES
+CREATE TABLE IF NOT EXISTS public.system_audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID, -- Nullable so audit records survive organization deletion
+    actor_id UUID,
+    actor_email TEXT,
+    actor_role TEXT,
+    event_type TEXT NOT NULL,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_system_audit_logs_org ON public.system_audit_logs(organization_id);
+CREATE INDEX IF NOT EXISTS idx_system_audit_logs_event ON public.system_audit_logs(event_type);
+CREATE INDEX IF NOT EXISTS idx_system_audit_logs_created ON public.system_audit_logs(created_at DESC);
+
+ALTER TABLE public.system_audit_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Owners and Admins can view organization audit logs"
+    ON public.system_audit_logs FOR SELECT
+    TO authenticated
+    USING (
+        organization_id = public.get_auth_org_id() 
+        AND public.get_auth_role() IN ('owner', 'admin')
+    );
+
+-- 14. PUBLIC / SECURE HELPER FUNCTIONS
+
+-- Check if an Owner account exists safely without exposing PII
+CREATE OR REPLACE FUNCTION public.check_has_owner()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 
+    FROM public.profiles 
+    WHERE role = 'owner' AND organization_id IS NOT NULL
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.check_has_owner() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.check_has_owner() TO anon, authenticated;
+
+-- Delete organization with audit trail
+CREATE OR REPLACE FUNCTION public.delete_current_organization(p_organization_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  caller_org UUID;
+  caller_role TEXT;
+  caller_email TEXT;
+  target_org_name TEXT;
+BEGIN
+  SELECT organization_id, role::TEXT, email
+    INTO caller_org, caller_role, caller_email
+  FROM public.profiles
+  WHERE id = auth.uid();
+
+  IF caller_org IS NULL OR caller_org <> p_organization_id OR caller_role <> 'owner' THEN
+    RAISE EXCEPTION 'Only the organization owner can delete this organization';
+  END IF;
+
+  SELECT name INTO target_org_name
+  FROM public.organizations
+  WHERE id = p_organization_id;
+
+  -- Record audit trail entry prior to deletion (persists after cascade delete)
+  INSERT INTO public.system_audit_logs (
+    organization_id,
+    actor_id,
+    actor_email,
+    actor_role,
+    event_type,
+    metadata
+  ) VALUES (
+    p_organization_id,
+    auth.uid(),
+    caller_email,
+    'owner',
+    'organization_deleted',
+    jsonb_build_object(
+      'organization_id', p_organization_id,
+      'organization_name', target_org_name,
+      'deleted_by_email', caller_email,
+      'deleted_at', timezone('utc'::TEXT, now())
+    )
+  );
+
+  -- Safe role downgrade within transaction to satisfy older delete triggers
+  UPDATE public.profiles
+  SET role = 'admin'
+  WHERE id = auth.uid() AND organization_id = p_organization_id;
+
+  PERFORM set_config('app.organization_deletion', 'true', true);
+  DELETE FROM public.organizations WHERE id = p_organization_id;
+
+  -- Delete the Auth login identity
+  DELETE FROM auth.users WHERE id = auth.uid();
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.delete_current_organization(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.delete_current_organization(UUID) TO authenticated;
+

@@ -90,6 +90,12 @@ The current development baseline includes:
 - Browser autofill mitigation
 - Improved loading/session handling
 - More useful backend error display
+- Multi-tenant Row-Level Security (RLS) policies across all tables
+- Privacy-preserving setup check RPC (`public.check_has_owner()`)
+- Persistent system audit logging table (`public.system_audit_logs`)
+- Audit logging for organization deletion
+- Standardized API error codes and error response helpers
+- Automated security and API validation test suites (`test-security.mjs`, `test-api.mjs`)
 - Git history and feature-oriented commits
 
 ## 3.2 Current Fresh State
@@ -640,25 +646,25 @@ A feature should not be considered complete merely because it visually works.
 
 # 21. Current Recommended Work
 
-The latest documented backlog / hardening work is:
+### 21.1 Completed Hardening (Current Baseline)
+- ✅ Row-Level Security (RLS) policies verified and hardened across all tables (`organizations`, `profiles`, `leads`, `lead_discussions`, `lead_activity`, `lead_assignment_history`, `system_audit_logs`).
+- ✅ Database foreign keys with `ON DELETE CASCADE` verified across all tenant boundaries.
+- ✅ Privacy-preserving setup check RPC (`public.check_has_owner()`) eliminating PII exposure to anonymous visitors.
+- ✅ Standardized API error codes and structured error handling helpers (`createSafeErrorResponse`, `API_ERROR_CODES`).
+- ✅ Dedicated `public.system_audit_logs` table for tracking security lifecycle events.
+- ✅ Audit logging integrated into `public.delete_current_organization` RPC prior to cascaded deletion.
+- ✅ Verified that Supabase service-role keys are strictly server-side (`lib/supabase/admin.ts`) and never leaked to browser code.
+- ✅ Automated security & API test suites (`scripts/test-security.mjs`, `scripts/test-api.mjs`).
 
-1. Automated tests for setup transaction behavior.
-2. Automated tests for organization deletion.
-3. Row Level Security verification for every relevant table.
-4. Appropriate database foreign keys with `ON DELETE CASCADE` where appropriate.
-5. Clear error codes from API routes.
-6. Error logging table or development-only server logs.
-7. Email confirmation handling during setup.
-8. Password reset testing.
-9. Staff invitation flow.
-10. Lead pagination.
-11. Optimistic UI only after persistence behavior is confirmed.
-12. Development-only database seed command instead of hardcoded demo data.
-13. Database health/status screen for owners.
-14. Audit logs for organization deletion.
-15. Final verification that Supabase service-role keys are never exposed in browser code.
-
-These items are **planned/hardening work**, not assumed to be complete.
+### 21.2 Active Recommended Backlog
+1. Staff invitation flow (email invites & role assignment).
+2. Email confirmation handling during setup.
+3. Password reset testing & recovery flow.
+4. Lead pagination and advanced filtering.
+5. Optimistic UI updates (after database persistence confirmation).
+6. Development-only database seed command instead of hardcoded demo data.
+7. Database health/status screen for owners.
+8. Banquet V2 features (Bookings, Calendar Availability, Quotations, Payments, Analytics).
 
 ---
 
@@ -843,6 +849,7 @@ CURRENT STATE: Fresh setup flow after successful deletion of prior test venue
 IMPORTANT DATABASE MIGRATIONS:
   - supabase/migrations/20260830_delete_organization.sql
   - supabase/migrations/20260831_atomic_owner_setup.sql
+  - supabase/migrations/20260831_security_and_rls_hardening.sql
 DEVELOPMENT COMMAND: npm run dev
 LOCAL URL: http://localhost:3000
 READ BEFORE CHANGING: this PRD + Workflow.md + actual code

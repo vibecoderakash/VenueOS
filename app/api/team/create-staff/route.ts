@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import { getAdminClient, getVerifiedCaller, checkEmailExists } from '@/lib/supabase/admin';
-import { normalizeEmail, isValidEmail, SAFE_IDENTITY_ERRORS, sanitizeErrorMessage } from '@/lib/validations/identity';
+import { 
+  normalizeEmail, 
+  isValidEmail, 
+  SAFE_IDENTITY_ERRORS, 
+  sanitizeErrorMessage,
+  createSafeErrorResponse,
+  API_ERROR_CODES 
+} from '@/lib/validations/identity';
 import { UserRole } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
@@ -11,26 +18,29 @@ export async function POST(req: Request) {
     // 1. Authenticate caller and resolve database permissions (never trust client claims)
     const { caller, error: authError, statusCode } = await getVerifiedCaller(req);
     if (authError || !caller) {
-      return NextResponse.json(
-        { error: authError || SAFE_IDENTITY_ERRORS.UNAUTHORIZED },
-        { status: statusCode || 401 }
+      return createSafeErrorResponse(
+        authError || SAFE_IDENTITY_ERRORS.UNAUTHORIZED,
+        API_ERROR_CODES.UNAUTHORIZED,
+        statusCode || 401
       );
     }
 
     // 2. Validate caller active status
     if (!caller.isActive) {
-      return NextResponse.json(
-        { error: SAFE_IDENTITY_ERRORS.FORBIDDEN_DEACTIVATED },
-        { status: 403 }
+      return createSafeErrorResponse(
+        SAFE_IDENTITY_ERRORS.FORBIDDEN_DEACTIVATED,
+        API_ERROR_CODES.FORBIDDEN_DEACTIVATED,
+        403
       );
     }
 
     // 3. Authorize caller role (only Owner, Manager, or Admin)
     const callerRole = caller.role;
     if (callerRole !== 'owner' && callerRole !== 'manager' && callerRole !== 'admin') {
-      return NextResponse.json(
-        { error: SAFE_IDENTITY_ERRORS.INSUFFICIENT_PERMISSIONS },
-        { status: 403 }
+      return createSafeErrorResponse(
+        SAFE_IDENTITY_ERRORS.INSUFFICIENT_PERMISSIONS,
+        API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE,
+        403
       );
     }
 
@@ -39,49 +49,51 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json({ error: 'Invalid JSON request body.' }, { status: 400 });
+      return createSafeErrorResponse('Invalid JSON request body.', API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     const { full_name, email, phone, role, password } = body;
 
     // Validate Full Name
     if (!full_name || typeof full_name !== 'string' || full_name.trim().length < 2) {
-      return NextResponse.json({ error: SAFE_IDENTITY_ERRORS.INVALID_NAME }, { status: 400 });
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.INVALID_NAME, API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     // Validate & Normalize Email
     const cleanEmail = normalizeEmail(email);
     if (!cleanEmail || !isValidEmail(cleanEmail)) {
-      return NextResponse.json({ error: SAFE_IDENTITY_ERRORS.INVALID_EMAIL_FORMAT }, { status: 400 });
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.INVALID_EMAIL_FORMAT, API_ERROR_CODES.VALIDATION_ERROR, 400);
     }
 
     const cleanName = full_name.trim();
     const cleanPhone = phone ? String(phone).trim() : null;
 
     // 5. Pre-check: Enforce ONE EMAIL = ONE ACCOUNT
-    // Reject immediately if the email already belongs to any Venue OS profile
     const alreadyExists = await checkEmailExists(cleanEmail);
     if (alreadyExists) {
-      return NextResponse.json(
-        { error: SAFE_IDENTITY_ERRORS.EMAIL_ALREADY_EXISTS },
-        { status: 409 }
+      return createSafeErrorResponse(
+        SAFE_IDENTITY_ERRORS.EMAIL_ALREADY_EXISTS,
+        API_ERROR_CODES.CONFLICT_EMAIL_EXISTS,
+        409
       );
     }
 
     // 6. Role validation and strict assignment enforcement
     const requestedRole = String(role || 'staff').toLowerCase().trim();
     if (requestedRole === 'owner') {
-      return NextResponse.json(
-        { error: 'Cannot create an additional Owner account.' },
-        { status: 400 }
+      return createSafeErrorResponse(
+        'Cannot create an additional Owner account.',
+        API_ERROR_CODES.VALIDATION_ERROR,
+        400
       );
     }
 
     // Managers cannot create other Managers
     if (callerRole === 'manager' && requestedRole !== 'staff') {
-      return NextResponse.json(
-        { error: 'Managers are only authorized to add Staff members.' },
-        { status: 403 }
+      return createSafeErrorResponse(
+        'Managers are only authorized to add Staff members.',
+        API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE,
+        403
       );
     }
 
@@ -99,7 +111,7 @@ export async function POST(req: Request) {
     const supabase = await createServerSupabaseClient();
 
     if (!supabase) {
-      return NextResponse.json({ error: SAFE_IDENTITY_ERRORS.DATABASE_UNAVAILABLE }, { status: 500 });
+      return createSafeErrorResponse(SAFE_IDENTITY_ERRORS.DATABASE_UNAVAILABLE, API_ERROR_CODES.DATABASE_UNAVAILABLE, 500);
     }
 
     let createdUserId: string | null = null;
@@ -120,9 +132,8 @@ export async function POST(req: Request) {
       });
 
       if (adminErr) {
-        // Safe error masking for duplicates or auth conflicts
         const safeMsg = sanitizeErrorMessage(adminErr, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
-        return NextResponse.json({ error: safeMsg }, { status: 400 });
+        return createSafeErrorResponse(safeMsg, API_ERROR_CODES.VALIDATION_ERROR, 400);
       }
 
       createdUserId = adminData.user.id;
@@ -144,7 +155,7 @@ export async function POST(req: Request) {
 
       if (signUpErr) {
         const safeMsg = sanitizeErrorMessage(signUpErr, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
-        return NextResponse.json({ error: safeMsg }, { status: 400 });
+        return createSafeErrorResponse(safeMsg, API_ERROR_CODES.VALIDATION_ERROR, 400);
       }
 
       createdUserId = signUpData.user?.id || null;
@@ -168,9 +179,8 @@ export async function POST(req: Request) {
         });
 
       if (profileErr) {
-        // Handle duplicate key / race condition
         const safeMsg = sanitizeErrorMessage(profileErr, SAFE_IDENTITY_ERRORS.EMAIL_ALREADY_EXISTS);
-        return NextResponse.json({ error: safeMsg }, { status: 409 });
+        return createSafeErrorResponse(safeMsg, API_ERROR_CODES.CONFLICT_EMAIL_EXISTS, 409);
       }
     }
 
@@ -190,6 +200,6 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     const safeError = sanitizeErrorMessage(err, SAFE_IDENTITY_ERRORS.GENERIC_ERROR);
-    return NextResponse.json({ error: safeError }, { status: 500 });
+    return createSafeErrorResponse(safeError, API_ERROR_CODES.INTERNAL_ERROR, 500);
   }
 }
