@@ -9,7 +9,7 @@ SET search_path = public
 AS $$
 DECLARE
   owner_exists BOOLEAN;
-  assigned_role TEXT;
+  assigned_role public.profiles.role%TYPE;
   user_name TEXT;
   user_phone TEXT;
   normalized_email TEXT;
