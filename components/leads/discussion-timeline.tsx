@@ -170,6 +170,9 @@ export function DiscussionTimeline({ lead }: DiscussionTimelineProps) {
                 <Clock className="w-3 h-3" style={{ color: 'var(--foreground-muted)' }} />
                 <input
                   type="datetime-local"
+                  lang="en-GB"
+                  step="60"
+                  aria-label="Next follow-up date and time (DD/MM/YYYY, HH:MM)"
                   value={nextFollowUpAt}
                   onChange={(e) => setNextFollowUpAt(e.target.value)}
                   className="bg-transparent text-[12px] focus:outline-none"

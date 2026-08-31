@@ -659,6 +659,9 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                 <div className="relative">
                   <input
                     type="datetime-local"
+                    lang="en-GB"
+                    step="60"
+                    aria-label="Follow-up date and time (DD/MM/YYYY, HH:MM)"
                     value={nextFollowUpAt}
                     onChange={(e) => setNextFollowUpAt(e.target.value)}
                     onInput={(e) => setNextFollowUpAt(e.currentTarget.value)}

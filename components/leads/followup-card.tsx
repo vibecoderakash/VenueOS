@@ -226,10 +226,13 @@ export function FollowupCard({ lead }: FollowupCardProps) {
               className="block text-[12px] font-medium mb-1"
               style={{ color: 'var(--foreground-secondary)' }}
             >
-              Follow-up Date & Time
+              Follow-up Date & Time <span className="text-[10px]">(DD/MM/YYYY, HH:MM)</span>
             </label>
             <input
               type="datetime-local"
+              lang="en-GB"
+              step="60"
+              aria-label="Follow-up date and time (DD/MM/YYYY, HH:MM)"
               required
               value={followUpDate}
               onChange={(e) => {
