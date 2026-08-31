@@ -21,6 +21,8 @@ import {
   Trash2,
   Copy,
   Check,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { createBrowserClient } from '@/lib/supabase/client';
@@ -57,6 +59,7 @@ export function TeamManagement() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [showAddPassword, setShowAddPassword] = useState(false);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
@@ -182,6 +185,11 @@ export function TeamManagement() {
       return;
     }
 
+    if (!newPassword.trim() || newPassword.trim().length < 8) {
+      setAddError('Password is required and must be at least 8 characters long.');
+      return;
+    }
+
     setIsAdding(true);
     try {
       const headers = await getAuthHeaders();
@@ -193,7 +201,7 @@ export function TeamManagement() {
           email: newEmail.trim().toLowerCase(),
           phone: newPhone.trim() || null,
           role: newRole,
-          password: newPassword.trim() || undefined,
+          password: newPassword.trim(),
         }),
       });
 
@@ -211,6 +219,7 @@ export function TeamManagement() {
       setNewEmail('');
       setNewPhone('');
       setNewPassword('');
+      setShowAddPassword(false);
       setNewRole('staff');
       fetchMembers();
     } catch (err) {
@@ -750,22 +759,35 @@ export function TeamManagement() {
                 )}
               </div>
 
-              {/* Initial Password */}
+              {/* Account Password */}
               <div>
                 <label className="block font-semibold text-foreground-secondary mb-1">
-                  Initial Password <span className="text-foreground-muted font-normal">(Optional — auto-generated if left blank)</span>
+                  Account Password <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={newPassword}
-                  onChange={(e) => {
-                    setNewPassword(e.target.value);
-                    if (addError) setAddError(null);
-                  }}
-                  placeholder="e.g. Staff@GrandImperial2026!"
-                  className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary font-mono text-xs"
-                  style={{ borderColor: 'var(--border)' }}
-                />
+                <div className="relative">
+                  <input
+                    type={showAddPassword ? 'text' : 'password'}
+                    required
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      if (addError) setAddError(null);
+                    }}
+                    placeholder="Minimum 8 characters (e.g. Staff@2026!)"
+                    className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary font-mono text-xs"
+                    style={{ borderColor: 'var(--border)' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAddPassword(!showAddPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-foreground-muted hover:text-foreground cursor-pointer"
+                  >
+                    {showAddPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-foreground-muted mt-1">
+                  Staff member will use this email and password to log in directly.
+                </p>
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-2">

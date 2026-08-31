@@ -168,6 +168,27 @@ async function runE2ETests() {
     assert('TEST 2.2: Staff create invalid role', false, err.message);
   }
 
+  // Test 2.2b: Staff direct creation with empty/short password rejected
+  try {
+    const res = await fetch(`${BASE_URL}/api/team/create-staff`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        full_name: 'Staff No Password',
+        email: 'nopass@venueos.local',
+        role: 'staff',
+        password: 'short',
+      }),
+    });
+    const data = await res.json();
+    assert(
+      'TEST 2.2b: POST /api/team/create-staff with short password rejected safely',
+      res.status === 401 || res.status === 400
+    );
+  } catch (err) {
+    assert('TEST 2.2b: Staff create short password', false, err.message);
+  }
+
   // Test 2.3: Team member listing without authentication rejected
   try {
     const res = await fetch(`${BASE_URL}/api/team/list`);

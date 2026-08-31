@@ -101,10 +101,15 @@ export async function POST(req: Request) {
       ? 'manager'
       : 'staff';
 
-    // Password generation or validation
-    const tempPassword = typeof password === 'string' && password.length >= 8
-      ? password
-      : `VenueOS@${Math.random().toString(36).slice(-8)}!2026`;
+    // Password validation: Password is strictly mandatory (minimum 8 characters)
+    if (!password || typeof password !== 'string' || password.trim().length < 8) {
+      return createSafeErrorResponse(
+        'Password is required and must be at least 8 characters long.',
+        API_ERROR_CODES.VALIDATION_ERROR,
+        400
+      );
+    }
+    const cleanPassword = password.trim();
 
     // 7. Atomic Creation in Supabase Auth & public.profiles
     const adminClient = getAdminClient();
@@ -120,7 +125,7 @@ export async function POST(req: Request) {
       // Use Admin API if service role key is available
       const { data: adminData, error: adminErr } = await adminClient.auth.admin.createUser({
         email: cleanEmail,
-        password: tempPassword,
+        password: cleanPassword,
         email_confirm: true,
         user_metadata: {
           full_name: cleanName,
@@ -141,7 +146,7 @@ export async function POST(req: Request) {
       // Fallback: standard sign up
       const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
         email: cleanEmail,
-        password: tempPassword,
+        password: cleanPassword,
         options: {
           data: {
             full_name: cleanName,
