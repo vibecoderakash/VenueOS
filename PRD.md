@@ -102,6 +102,7 @@ The current development baseline includes:
 - Orphan Auth-user cleanup function with optional scheduled pg_cron execution
 - Standardized API error codes and error response helpers
 - Automated security and API validation test suites (`test-security.mjs`, `test-api.mjs`)
+- Lead validation suite verifies valid payloads still require authentication (`test-leads.mjs`)
 - Git history and feature-oriented commits
 
 ## 3.2 Current Fresh State

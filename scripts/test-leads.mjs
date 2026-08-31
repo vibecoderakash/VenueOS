@@ -159,6 +159,7 @@ async function runTests() {
       body: JSON.stringify({
         customer_name: 'API Test Lead',
         phone: '9811223344',
+        source: 'Website',
         event_type: 'Birthday',
         event_date_status: 'not_fixed',
         event_date: null,
@@ -167,7 +168,9 @@ async function runTests() {
       }),
     });
     const dataValid = await resValid.json();
-    assert('API TEST: Valid lead POST returned 201', resValid.status === 201 && dataValid.success);
+    // The payload is valid, but this standalone script has no authenticated
+    // Supabase session. The API must reject it rather than create a record.
+    assert('API TEST: Valid lead POST without auth returned 401', resValid.status === 401 && dataValid.code === 'AUTH_UNAUTHORIZED');
 
     const resManipulated = await fetch('http://localhost:3000/api/leads', {
       method: 'POST',
