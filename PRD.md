@@ -236,6 +236,8 @@ Auth users without a matching database profile are treated as invalid/orphaned a
 
 After valid Auth credentials are accepted, an account without a matching active venue/profile connection must receive the clear message: “This account is not connected to an active venue. Please contact your venue administrator.” Invalid credentials continue to use the generic credential error.
 
+When the server-side Auth diagnostic is configured, an email that is not registered receives: “No account exists with this email. Please contact your venue administrator.” If the diagnostic is unavailable, the application falls back to the generic credential error.
+
 Inactive users are intended to sign in and view permitted dashboard data, while all business mutations are blocked in both the UI and backend/database policies. The application session behavior must remain aligned with this rule; it must not silently grant mutation access to an inactive account.
 
 Production authentication errors should remain mostly generic to avoid unnecessarily revealing account existence.

@@ -350,6 +350,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             error.message.toLowerCase().includes('invalid login credentials') ||
             error.message.toLowerCase().includes('invalid grant')
           ) {
+            try {
+              const accountStatus = await fetch('/api/auth/account-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email.trim().toLowerCase() }),
+              });
+              const status = await accountStatus.json();
+              if (status.configured && status.exists === false) {
+                return {
+                  success: false,
+                  error: 'No account exists with this email. Please contact your venue administrator.',
+                };
+              }
+            } catch {
+              // Keep the generic credential message if the diagnostic is unavailable.
+            }
             const ownerExists = await checkOwnerExists();
             if (!ownerExists) {
               return {
