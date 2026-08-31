@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Phone,
@@ -10,6 +11,7 @@ import {
   Flame,
   Archive,
   RotateCcw,
+  Trash2,
 } from 'lucide-react';
 import { Lead, LeadStatus, LeadPriority } from '@/types/database';
 import {
@@ -35,7 +37,12 @@ const selectStyle: React.CSSProperties = {
 };
 
 export function LeadHeader({ lead }: LeadHeaderProps) {
-  const { currentProfile, profiles, updateStatus, updatePriority, assignLead, archiveLead, restoreLead, organization } = useData();
+  const router = useRouter();
+  const { currentProfile, profiles, updateStatus, updatePriority, assignLead, archiveLead, restoreLead, deleteLead, organization } = useData();
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = React.useState('');
+  const [deleteError, setDeleteError] = React.useState('');
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   if (!currentProfile) return null;
 
@@ -43,6 +50,17 @@ export function LeadHeader({ lead }: LeadHeaderProps) {
   const eventBadge = getEventTypeBadge(lead.event_type);
   const sourceBadge = getSourceBadge(lead.source);
   const isArchived = !!lead.archived_at;
+  const canDelete = ['owner', 'manager', 'admin'].includes(currentProfile.role);
+
+  const handleDelete = async () => {
+    if (deleteConfirmation.trim() !== lead.customer_name.trim()) {
+      setDeleteError('Type the lead customer name exactly to continue.');
+      return;
+    }
+    setIsDeleting(true); setDeleteError('');
+    try { await deleteLead(lead.id); router.push('/leads'); }
+    catch (error) { setDeleteError(error instanceof Error ? error.message : 'Unable to delete lead.'); setIsDeleting(false); }
+  };
 
   const handleStatusChange = async (newStatus: LeadStatus) => {
     if (newStatus === 'Converted') {
@@ -174,8 +192,24 @@ export function LeadHeader({ lead }: LeadHeaderProps) {
               <><Archive className="w-3 h-3" /><span>Archive</span></>
             )}
           </button>
+          {canDelete && (
+            <button type="button" onClick={() => { setDeleteConfirmation(''); setDeleteError(''); setDeleteOpen(true); }} className="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-[6px] transition-colors" style={{ border: '1px solid var(--danger)', color: 'var(--danger)', backgroundColor: 'color-mix(in srgb, var(--danger) 10%, transparent)' }} title="Delete lead">
+              <Trash2 className="w-3 h-3" /><span>Delete</span>
+            </button>
+          )}
         </div>
       </div>
+      {deleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-labelledby="delete-lead-title">
+          <div className="w-full max-w-md rounded-xl p-5 space-y-4" style={{ backgroundColor: 'var(--surface)', border: '1px solid var(--danger)' }}>
+            <div><h2 id="delete-lead-title" className="text-base font-bold" style={{ color: 'var(--danger)' }}>Delete Lead Permanently</h2><p className="text-sm mt-1" style={{ color: 'var(--foreground-secondary)' }}>This action cannot be undone. All discussions and activity for this lead will also be removed.</p></div>
+            <p className="text-sm" style={{ color: 'var(--foreground)' }}>Type <strong>{lead.customer_name}</strong> to confirm.</p>
+            <input value={deleteConfirmation} onChange={(e) => setDeleteConfirmation(e.target.value)} placeholder="Type lead customer name" className="w-full rounded-lg px-3 py-2 text-sm" style={{ backgroundColor: 'var(--surface-secondary)', border: '1px solid var(--border)', color: 'var(--foreground)' }} />
+            {deleteError && <p className="text-sm font-semibold" style={{ color: 'var(--danger)' }}>{deleteError}</p>}
+            <div className="flex justify-end gap-2"><button type="button" onClick={() => setDeleteOpen(false)} className="px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--surface-secondary)', color: 'var(--foreground-secondary)' }}>Cancel</button><button type="button" disabled={isDeleting} onClick={handleDelete} className="px-3 py-2 rounded-lg font-semibold text-white disabled:opacity-50" style={{ backgroundColor: 'var(--danger)' }}>{isDeleting ? 'Deleting...' : 'Confirm Permanent Delete'}</button></div>
+          </div>
+        </div>
+      )}
 
       {/* Customer Info + Actions */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">

@@ -74,6 +74,7 @@ The current development baseline includes:
 - Lead priority changes
 - Sales owner assignment
 - Lead archive/restore
+- Owner/manager-only permanent lead deletion with exact-name double confirmation
 - Lead discussions
 - Lead activity logs
 - Organization-level filtering/isolation foundations
@@ -894,6 +895,7 @@ IMPORTANT DATABASE MIGRATIONS:
   - supabase/migrations/20260831_inactive_users_read_only.sql
   - supabase/migrations/20260831_orphan_auth_cleanup.sql
   - supabase/migrations/20260831_owner_only_business_profile.sql
+  - supabase/migrations/20260831_lead_delete_permissions.sql
 DEVELOPMENT COMMAND: npm run dev
 LOCAL URL: http://localhost:3000
 READ BEFORE CHANGING: this PRD + Workflow.md + actual code

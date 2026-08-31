@@ -47,6 +47,7 @@ interface DataContextType {
   assignLead: (leadId: string, ownerId: string | null) => Promise<void>;
   archiveLead: (leadId: string) => Promise<void>;
   restoreLead: (leadId: string) => Promise<void>;
+  deleteLead: (leadId: string) => Promise<void>;
   checkDuplicatePhone: (phone: string, excludeLeadId?: string) => Lead | null;
   isLoading: boolean;
 }
@@ -730,6 +731,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     logActivity(leadId, 'restored', { details: 'Lead restored from archive' });
   };
 
+  const deleteLead = async (leadId: string): Promise<void> => {
+    assertCanMutate();
+    if (!['owner', 'manager', 'admin'].includes(currentProfile.role)) {
+      throw new Error('Only the Venue Owner or Manager can delete leads.');
+    }
+    const supabase = createBrowserClient();
+    const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+    const response = await fetch(`/api/leads/${leadId}`, {
+      method: 'DELETE',
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload.success) throw new Error(payload.error || payload.message || 'Unable to delete lead.');
+    setLeads((current) => current.filter((lead) => lead.id !== leadId));
+    setDiscussions((current) => { const next = { ...current }; delete next[leadId]; return next; });
+    setActivity((current) => { const next = { ...current }; delete next[leadId]; return next; });
+  };
+
   // Calculate high-precision dashboard metrics
   const metrics = useMemo<DashboardMetrics>(() => {
     const activeLeads = leads.filter((l) => !l.archived_at);
@@ -797,6 +816,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     assignLead,
     archiveLead,
     restoreLead,
+    deleteLead,
     checkDuplicatePhone,
     isLoading,
   }), [
@@ -826,6 +846,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     assignLead,
     archiveLead,
     restoreLead,
+    deleteLead,
     checkDuplicatePhone,
     isLoading,
   ]);
