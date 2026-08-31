@@ -36,6 +36,36 @@ export async function POST(
 
     if (rpcError) {
       // The RPC raises exceptions for unauthorized or invalid assignments
+      const rawMessage = rpcError.message || '';
+      if (rawMessage.includes('assign_lead') && rawMessage.includes('does not exist')) {
+        return createSafeErrorResponse(
+          'Lead reassignment is not configured in Supabase. Apply the lead assignment migration first.',
+          API_ERROR_CODES.DATABASE_UNAVAILABLE,
+          503
+        );
+      }
+      if (rawMessage.includes('lead_assignment_history') && rawMessage.includes('does not exist')) {
+        return createSafeErrorResponse(
+          'Lead assignment history is not configured in Supabase. Apply the lead assignment migration first.',
+          API_ERROR_CODES.DATABASE_UNAVAILABLE,
+          503
+        );
+      }
+      if (rawMessage.includes('selected user is not a member')) {
+        return createSafeErrorResponse('The selected user is not a member of this venue.', API_ERROR_CODES.VALIDATION_ERROR, 400);
+      }
+      if (rawMessage.includes('inactive user')) {
+        return createSafeErrorResponse('This user is inactive and cannot receive leads.', API_ERROR_CODES.VALIDATION_ERROR, 400);
+      }
+      if (rawMessage.includes('managers cannot assign')) {
+        return createSafeErrorResponse('Managers cannot assign leads to the venue owner.', API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE, 403);
+      }
+      if (rawMessage.includes('lead not found')) {
+        return createSafeErrorResponse('This lead no longer exists in your venue.', API_ERROR_CODES.RESOURCE_NOT_FOUND, 404);
+      }
+      if (rawMessage.includes('only owners and managers')) {
+        return createSafeErrorResponse('Only the venue owner or a manager can reassign leads.', API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE, 403);
+      }
       const safeMsg = sanitizeErrorMessage(rpcError, 'Failed to reassign lead.');
       return createSafeErrorResponse(safeMsg, API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE, 403);
     }

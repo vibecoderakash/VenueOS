@@ -405,6 +405,10 @@ date/time alongside the relative time. Existing activity rows are never
 re-upserted when a new audit entry is created; each new entry is inserted once
 through the authenticated Supabase path so RLS remains effective.
 
+Lead reassignment uses the atomic `public.assign_lead(UUID, UUID)` Supabase
+RPC and `public.lead_assignment_history`. Both must be installed from the lead
+assignment migration before the owner selector is used.
+
 This creates a traceable history of important changes.
 
 ---
