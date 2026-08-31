@@ -35,9 +35,9 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const ROLE_BADGES: Record<string, { bg: string; color: string }> = {
-  owner: { bg: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24' },
-  manager: { bg: 'rgba(99, 102, 241, 0.2)', color: '#a5b4fc' },
-  staff: { bg: 'rgba(148, 163, 184, 0.2)', color: '#cbd5e1' },
+  owner: { bg: 'rgba(245, 158, 11, 0.28)', color: '#fbbf24' },
+  manager: { bg: 'rgba(59, 130, 246, 0.28)', color: '#60a5fa' },
+  staff: { bg: 'rgba(16, 185, 129, 0.28)', color: '#34d399' },
 };
 
 interface NavItem {

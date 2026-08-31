@@ -35,12 +35,12 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const ROLE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-  owner: { bg: 'rgba(245, 158, 11, 0.12)', color: '#d97706', border: 'rgba(245, 158, 11, 0.3)' },
-  manager: { bg: 'rgba(79, 70, 229, 0.12)', color: '#4f46e5', border: 'rgba(79, 70, 229, 0.3)' },
-  staff: { bg: 'rgba(100, 116, 139, 0.12)', color: '#475569', border: 'rgba(100, 116, 139, 0.25)' },
-  admin: { bg: 'rgba(79, 70, 229, 0.12)', color: '#4f46e5', border: 'rgba(79, 70, 229, 0.3)' },
-  sales: { bg: 'rgba(100, 116, 139, 0.12)', color: '#475569', border: 'rgba(100, 116, 139, 0.25)' },
-  front_desk: { bg: 'rgba(100, 116, 139, 0.12)', color: '#475569', border: 'rgba(100, 116, 139, 0.25)' },
+  owner: { bg: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: 'rgba(245, 158, 11, 0.55)' },
+  manager: { bg: 'rgba(59, 130, 246, 0.2)', color: '#2563eb', border: 'rgba(59, 130, 246, 0.55)' },
+  staff: { bg: 'rgba(16, 185, 129, 0.2)', color: '#059669', border: 'rgba(16, 185, 129, 0.55)' },
+  admin: { bg: 'rgba(59, 130, 246, 0.2)', color: '#2563eb', border: 'rgba(59, 130, 246, 0.55)' },
+  sales: { bg: 'rgba(16, 185, 129, 0.2)', color: '#059669', border: 'rgba(16, 185, 129, 0.55)' },
+  front_desk: { bg: 'rgba(16, 185, 129, 0.2)', color: '#059669', border: 'rgba(16, 185, 129, 0.55)' },
 };
 
 export function TeamManagement() {
@@ -535,7 +535,7 @@ export function TeamManagement() {
                       {/* Role Badge */}
                       <td className="py-4 px-4 sm:px-6">
                         <span
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-extrabold border"
                           style={{
                             backgroundColor: roleStyle.bg,
                             color: roleStyle.color,
