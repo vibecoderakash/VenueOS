@@ -239,7 +239,7 @@ Auth users without a matching database profile are treated as invalid/orphaned a
 
 After valid Auth credentials are accepted, an account without a matching active venue/profile connection must receive the clear message: “This account is not connected to an active venue. Please contact your venue administrator.” Invalid credentials continue to use the generic credential error.
 
-After valid credentials are accepted, an inactive account must receive: “Your account is inactive. Please contact your administrator or venue owner to activate your account.” The account must not enter the dashboard until it is reactivated.
+After valid credentials are accepted, an inactive account enters read-only mode and sees an inactive warning: “Your account is inactive. Please contact your administrator or venue owner to activate your account.” It may view permitted dashboard data but cannot create, edit, delete, assign, archive, restore, or otherwise mutate business data until reactivated.
 
 When the server-side Auth diagnostic is configured, an email that is not registered receives: “No account exists with this email. Please contact your venue administrator.” If the diagnostic is unavailable, the application falls back to the generic credential error.
 
