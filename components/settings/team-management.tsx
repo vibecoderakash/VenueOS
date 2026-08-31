@@ -55,6 +55,7 @@ export function TeamManagement() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [inviteMode, setInviteMode] = useState<'invite' | 'password'>('invite');
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
@@ -138,16 +139,12 @@ export function TeamManagement() {
         credentials: 'include',
       });
 
-      // A cached access token can outlive the server-side session during a
-      // hard navigation. Refresh it once and retry before showing an error.
       if (res.status === 401) {
         res = await fetch('/api/team/list', {
           headers: await getAuthHeaders(true),
           credentials: 'include',
         });
 
-        // The browser can reach Supabase even when the local Next.js process
-        // cannot validate bearer tokens due to its restricted network.
         if (res.status === 401 && (await loadMembersFromBrowserSession())) {
           return;
         }
@@ -170,14 +167,11 @@ export function TeamManagement() {
   }, []);
 
   useEffect(() => {
-    // Auth restoration and team loading happen independently on a hard
-    // navigation. Do not send the first request before a session exists, and
-    // retry automatically when AuthProvider finishes restoring the profile.
     if (isAuthLoading || !currentUser?.id) return;
     fetchMembers();
   }, [fetchMembers, isAuthLoading, currentUser?.id]);
 
-  // Handle Add Staff
+  // Handle Add Staff / Send Invite
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddError(null);
@@ -190,26 +184,29 @@ export function TeamManagement() {
     setIsAdding(true);
     try {
       const headers = await getAuthHeaders();
-      const res = await fetch('/api/team/create-staff', {
+      const endpoint = inviteMode === 'invite' ? '/api/team/invite' : '/api/team/create-staff';
+      const payload = {
+        full_name: newName.trim(),
+        email: newEmail.trim().toLowerCase(),
+        phone: newPhone.trim() || null,
+        role: newRole,
+        ...(inviteMode === 'password' ? { password: newPassword.trim() || undefined } : {}),
+      };
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-          full_name: newName.trim(),
-          email: newEmail.trim().toLowerCase(),
-          phone: newPhone.trim() || null,
-          role: newRole,
-          password: newPassword.trim() || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
       if (!res.ok || data.error) {
-        setAddError(data.error || 'Failed to create staff account.');
+        setAddError(data.error || 'Failed to process staff request.');
         setIsAdding(false);
         return;
       }
 
-      showToast(data.message || 'Staff account created successfully!', 'success');
+      showToast(data.message || 'Staff member added successfully!', 'success');
       setIsAddOpen(false);
       setAddError(null);
       setNewName('');
@@ -671,6 +668,32 @@ export function TeamManagement() {
               </div>
             )}
 
+            {/* Mode Switcher: Email Invitation vs Direct Account Creation */}
+            <div className="flex rounded-xl p-1 bg-surface-secondary border" style={{ borderColor: 'var(--border)' }}>
+              <button
+                type="button"
+                onClick={() => setInviteMode('invite')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  inviteMode === 'invite'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-foreground-muted hover:text-foreground'
+                }`}
+              >
+                Send Email Invite
+              </button>
+              <button
+                type="button"
+                onClick={() => setInviteMode('password')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  inviteMode === 'password'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-foreground-muted hover:text-foreground'
+                }`}
+              >
+                Direct Creation (Password)
+              </button>
+            </div>
+
             <form onSubmit={handleAddStaff} className="space-y-4 text-xs sm:text-sm">
               <div>
                 <label className="block font-semibold text-foreground-secondary mb-1">
@@ -754,23 +777,25 @@ export function TeamManagement() {
                 )}
               </div>
 
-              {/* Initial Password */}
-              <div>
-                <label className="block font-semibold text-foreground-secondary mb-1">
-                  Initial Password <span className="text-foreground-muted font-normal">(Optional — auto-generated if left blank)</span>
-                </label>
-                <input
-                  type="text"
-                  value={newPassword}
-                  onChange={(e) => {
-                    setNewPassword(e.target.value);
-                    if (addError) setAddError(null);
-                  }}
-                  placeholder="e.g. Staff@GrandImperial2026!"
-                  className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary font-mono text-xs"
-                  style={{ borderColor: 'var(--border)' }}
-                />
-              </div>
+              {/* Initial Password (shown only in direct creation mode) */}
+              {inviteMode === 'password' && (
+                <div>
+                  <label className="block font-semibold text-foreground-secondary mb-1">
+                    Initial Password <span className="text-foreground-muted font-normal">(Optional — auto-generated if left blank)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      if (addError) setAddError(null);
+                    }}
+                    placeholder="e.g. Staff@GrandImperial2026!"
+                    className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary font-mono text-xs"
+                    style={{ borderColor: 'var(--border)' }}
+                  />
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-2.5 pt-2">
                 <button
@@ -790,7 +815,9 @@ export function TeamManagement() {
                   className="px-5 py-2.5 rounded-xl font-semibold text-white shadow-md transition-all cursor-pointer disabled:opacity-60"
                   style={{ backgroundColor: 'var(--primary)' }}
                 >
-                  {isAdding ? 'Creating Account...' : 'Create Account'}
+                  {isAdding
+                    ? inviteMode === 'invite' ? 'Sending Invite...' : 'Creating Account...'
+                    : inviteMode === 'invite' ? 'Send Invitation' : 'Create Account'}
                 </button>
               </div>
             </form>

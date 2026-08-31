@@ -33,6 +33,7 @@ export default function SetupPage() {
 
   const [isCheckingStatus, setIsCheckingStatus] = useState(true);
   const [ownerAlreadyExists, setOwnerAlreadyExists] = useState(false);
+  const [needsEmailConfirm, setNeedsEmailConfirm] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(59);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -158,6 +159,49 @@ export default function SetupPage() {
     );
   }
 
+  // Email Confirmation Screen (if project SMTP enforces verification before login)
+  if (needsEmailConfirm) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#070a16] text-white p-6">
+        <div className="max-w-md w-full text-center space-y-6">
+          <div className="relative inline-flex items-center justify-center mx-auto">
+            <div className="absolute inset-0 bg-indigo-500 rounded-2xl blur-lg opacity-40 animate-pulse" />
+            <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 border border-indigo-400/40 flex items-center justify-center shadow-xl">
+              <Mail className="w-8 h-8 text-white" />
+            </div>
+          </div>
+
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Confirm Your Email Address
+            </h1>
+            <p className="mt-2 text-slate-400 text-sm sm:text-base leading-relaxed">
+              We have sent a verification link to <strong className="text-indigo-300">{email}</strong>. Please check your inbox and click the confirmation link to activate your owner workspace.
+            </p>
+          </div>
+
+          <div className="bg-slate-800/60 backdrop-blur-sm border border-slate-700/60 rounded-2xl p-5 text-left space-y-3">
+            <div className="flex items-center gap-2.5 text-indigo-400 text-xs font-semibold uppercase tracking-wider">
+              <ShieldCheck className="w-4 h-4" />
+              <span>Next Steps</span>
+            </div>
+            <p className="text-slate-300 text-sm leading-relaxed">
+              After confirming your email address, you can return and sign in using your credentials to access your venue dashboard.
+            </p>
+          </div>
+
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center gap-2.5 w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-semibold text-sm shadow-lg shadow-indigo-600/25 transition-all group"
+          >
+            <span>Proceed to Login</span>
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -222,13 +266,20 @@ export default function SetupPage() {
       // Auto sign-in to establish authenticated session
       const signInResult = await signIn(email.trim().toLowerCase(), password);
 
-      setTimeout(() => {
-        if (signInResult.success) {
+      if (signInResult.success) {
+        setTimeout(() => {
           router.replace('/');
+        }, 800);
+      } else {
+        const errText = (signInResult.error || '').toLowerCase();
+        if (errText.includes('confirm') || errText.includes('verify') || errText.includes('not confirmed')) {
+          setNeedsEmailConfirm(true);
         } else {
-          router.replace('/login');
+          setTimeout(() => {
+            router.replace('/login');
+          }, 1000);
         }
-      }, 800);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Network error during setup';
       setErrorMsg(msg);
