@@ -57,9 +57,6 @@ export function TeamManagement() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
-  const [inviteMode, setInviteMode] = useState<'invite' | 'password'>('invite');
-  const [createdInviteLink, setCreatedInviteLink] = useState<{ email: string; link: string } | null>(null);
-  const [hasCopied, setHasCopied] = useState(false);
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
@@ -175,7 +172,7 @@ export function TeamManagement() {
     fetchMembers();
   }, [fetchMembers, isAuthLoading, currentUser?.id]);
 
-  // Handle Add Staff / Send Invite
+  // Handle Add Staff
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddError(null);
@@ -188,35 +185,26 @@ export function TeamManagement() {
     setIsAdding(true);
     try {
       const headers = await getAuthHeaders();
-      const endpoint = inviteMode === 'invite' ? '/api/team/invite' : '/api/team/create-staff';
-      const payload = {
-        full_name: newName.trim(),
-        email: newEmail.trim().toLowerCase(),
-        phone: newPhone.trim() || null,
-        role: newRole,
-        ...(inviteMode === 'password' ? { password: newPassword.trim() || undefined } : {}),
-      };
-
-      const res = await fetch(endpoint, {
+      const res = await fetch('/api/team/create-staff', {
         method: 'POST',
         headers,
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          full_name: newName.trim(),
+          email: newEmail.trim().toLowerCase(),
+          phone: newPhone.trim() || null,
+          role: newRole,
+          password: newPassword.trim() || undefined,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok || data.error) {
-        setAddError(data.error || 'Failed to process staff request.');
+        setAddError(data.error || 'Failed to create staff account.');
         setIsAdding(false);
         return;
       }
 
-      if (data.inviteLink) {
-        setCreatedInviteLink({ email: newEmail.trim(), link: data.inviteLink });
-        setHasCopied(false);
-      } else {
-        showToast(data.message || 'Staff member added successfully!', 'success');
-      }
-
+      showToast(data.message || 'Staff account created successfully!', 'success');
       setIsAddOpen(false);
       setAddError(null);
       setNewName('');
@@ -649,6 +637,7 @@ export function TeamManagement() {
               borderColor: 'var(--border)',
             }}
           >
+            {/* Modal Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
@@ -656,7 +645,7 @@ export function TeamManagement() {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-foreground">Add New Staff or Manager</h3>
-                  <p className="text-xs text-foreground-muted">Grant authorized access to this venue</p>
+                  <p className="text-xs text-foreground-muted">Create immediate account credentials for this venue</p>
                 </div>
               </div>
               <button
@@ -677,32 +666,6 @@ export function TeamManagement() {
                 <span className="leading-snug">{addError}</span>
               </div>
             )}
-
-            {/* Mode Switcher: Email Invitation vs Direct Account Creation */}
-            <div className="flex rounded-xl p-1 bg-surface-secondary border" style={{ borderColor: 'var(--border)' }}>
-              <button
-                type="button"
-                onClick={() => setInviteMode('invite')}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  inviteMode === 'invite'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-foreground-muted hover:text-foreground'
-                }`}
-              >
-                Send Email Invite
-              </button>
-              <button
-                type="button"
-                onClick={() => setInviteMode('password')}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  inviteMode === 'password'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-foreground-muted hover:text-foreground'
-                }`}
-              >
-                Direct Creation (Password)
-              </button>
-            </div>
 
             <form onSubmit={handleAddStaff} className="space-y-4 text-xs sm:text-sm">
               <div>
@@ -787,25 +750,23 @@ export function TeamManagement() {
                 )}
               </div>
 
-              {/* Initial Password (shown only in direct creation mode) */}
-              {inviteMode === 'password' && (
-                <div>
-                  <label className="block font-semibold text-foreground-secondary mb-1">
-                    Initial Password <span className="text-foreground-muted font-normal">(Optional — auto-generated if left blank)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={newPassword}
-                    onChange={(e) => {
-                      setNewPassword(e.target.value);
-                      if (addError) setAddError(null);
-                    }}
-                    placeholder="e.g. Staff@GrandImperial2026!"
-                    className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary font-mono text-xs"
-                    style={{ borderColor: 'var(--border)' }}
-                  />
-                </div>
-              )}
+              {/* Initial Password */}
+              <div>
+                <label className="block font-semibold text-foreground-secondary mb-1">
+                  Initial Password <span className="text-foreground-muted font-normal">(Optional — auto-generated if left blank)</span>
+                </label>
+                <input
+                  type="text"
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (addError) setAddError(null);
+                  }}
+                  placeholder="e.g. Staff@GrandImperial2026!"
+                  className="w-full px-3.5 py-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:border-primary font-mono text-xs"
+                  style={{ borderColor: 'var(--border)' }}
+                />
+              </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-2">
                 <button
@@ -825,9 +786,7 @@ export function TeamManagement() {
                   className="px-5 py-2.5 rounded-xl font-semibold text-white shadow-md transition-all cursor-pointer disabled:opacity-60"
                   style={{ backgroundColor: 'var(--primary)' }}
                 >
-                  {isAdding
-                    ? inviteMode === 'invite' ? 'Sending Invite...' : 'Creating Account...'
-                    : inviteMode === 'invite' ? 'Send Invitation' : 'Create Account'}
+                  {isAdding ? 'Creating Account...' : 'Create Account'}
                 </button>
               </div>
             </form>
@@ -1024,100 +983,6 @@ export function TeamManagement() {
               >
                 <Trash2 className={`w-4 h-4 ${isDeleting ? 'animate-spin' : ''}`} />
                 <span>{isDeleting ? 'Deleting...' : 'Delete Permanently'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
-          MODAL: Invitation Created & Direct Link Ready
-          ========================================================================= */}
-      {createdInviteLink && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-          <div
-            className="w-full max-w-lg rounded-2xl border shadow-2xl p-6 sm:p-7 space-y-5"
-            style={{
-              backgroundColor: 'var(--surface)',
-              borderColor: 'var(--border)',
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-bold text-foreground">
-                    Invitation Link Ready!
-                  </h3>
-                  <p className="text-xs text-foreground-muted">
-                    Share this link directly or let Supabase deliver the email
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setCreatedInviteLink(null)}
-                className="p-1.5 rounded-lg text-foreground-muted hover:text-foreground cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-4 rounded-xl bg-surface-secondary border text-xs sm:text-sm text-foreground-secondary space-y-2" style={{ borderColor: 'var(--border)' }}>
-              <p>
-                An invite has been prepared for <strong className="text-foreground">{createdInviteLink.email}</strong>.
-              </p>
-              <p className="text-xs text-foreground-muted leading-relaxed">
-                If the email is delayed or your SMTP is rate-limited, you can copy this one-time link and send it directly to the staff member via WhatsApp, Slack, or SMS:
-              </p>
-            </div>
-
-            {/* Link Box with Copy Button */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 p-2.5 rounded-xl border bg-background" style={{ borderColor: 'var(--border)' }}>
-                <input
-                  type="text"
-                  readOnly
-                  value={createdInviteLink.link}
-                  className="w-full bg-transparent text-xs font-mono text-foreground focus:outline-none select-all truncate"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(createdInviteLink.link);
-                    setHasCopied(true);
-                    setTimeout(() => setHasCopied(false), 2500);
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex-shrink-0 ${
-                    hasCopied
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-primary text-white hover:opacity-90'
-                  }`}
-                >
-                  {hasCopied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy Link</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setCreatedInviteLink(null)}
-                className="px-5 py-2.5 rounded-xl font-semibold text-white shadow-md transition-all cursor-pointer"
-                style={{ backgroundColor: 'var(--primary)' }}
-              >
-                Done
               </button>
             </div>
           </div>

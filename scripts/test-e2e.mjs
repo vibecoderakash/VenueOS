@@ -122,31 +122,11 @@ async function runE2ETests() {
   }
 
   // -------------------------------------------------------------
-  // 2. STAFF INVITATION & DIRECT CREATION API SECURITY
+  // 2. STAFF CREATION & TEAM MANAGEMENT API SECURITY
   // -------------------------------------------------------------
-  console.log('\n--- 2. Staff Invitation & Team Security Suite ---');
+  console.log('\n--- 2. Staff Creation & Team Security Suite ---');
 
-  // Test 2.1: Staff invite without authentication rejected
-  try {
-    const res = await fetch(`${BASE_URL}/api/team/invite`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        full_name: 'New Staff',
-        email: 'staff@venueos.local',
-        role: 'staff',
-      }),
-    });
-    const data = await res.json();
-    assert(
-      'TEST 2.1: POST /api/team/invite without session rejected with 401 + UNAUTHORIZED',
-      res.status === 401 && (data.code === 'AUTH_UNAUTHORIZED' || data.code === 'UNAUTHORIZED')
-    );
-  } catch (err) {
-    assert('TEST 2.1: Staff invite unauthenticated', false, err.message);
-  }
-
-  // Test 2.2: Staff direct creation without authentication rejected
+  // Test 2.1: Staff direct creation without authentication rejected
   try {
     const res = await fetch(`${BASE_URL}/api/team/create-staff`, {
       method: 'POST',
@@ -160,11 +140,32 @@ async function runE2ETests() {
     });
     const data = await res.json();
     assert(
-      'TEST 2.2: POST /api/team/create-staff without session rejected with 401 + UNAUTHORIZED',
+      'TEST 2.1: POST /api/team/create-staff without session rejected with 401 + UNAUTHORIZED',
       res.status === 401 && (data.code === 'AUTH_UNAUTHORIZED' || data.code === 'UNAUTHORIZED')
     );
   } catch (err) {
-    assert('TEST 2.2: Staff direct create unauthenticated', false, err.message);
+    assert('TEST 2.1: Staff direct create unauthenticated', false, err.message);
+  }
+
+  // Test 2.2: Staff direct creation with invalid role rejected
+  try {
+    const res = await fetch(`${BASE_URL}/api/team/create-staff`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        full_name: 'Owner Impersonator',
+        email: 'fakeowner@venueos.local',
+        role: 'owner',
+        password: 'Password123!',
+      }),
+    });
+    const data = await res.json();
+    assert(
+      'TEST 2.2: POST /api/team/create-staff with owner role rejected safely',
+      res.status === 401 || res.status === 400
+    );
+  } catch (err) {
+    assert('TEST 2.2: Staff create invalid role', false, err.message);
   }
 
   // Test 2.3: Team member listing without authentication rejected

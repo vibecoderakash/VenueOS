@@ -733,7 +733,7 @@ A feature should not be considered complete merely because it visually works.
 - ✅ Password recovery & reset flow (`/forgot-password`, `/reset-password`, and validation test suite `test-recovery.mjs`).
 - ✅ Optimistic UI updates with resilient state rollback on Supabase mutation failure.
 - ✅ Owner Health & Security Diagnostics dashboard in Settings (`/api/health/diagnostics`, `components/settings/health-diagnostics.tsx`) with latency monitoring, live tenant table stats, RLS status, orphan user checker, and system audit log viewer.
-- ✅ Staff invitation flow (`app/api/team/invite/route.ts` & `components/settings/team-management.tsx`) with role selection (`Manager` vs `Staff`) and dual mode (Email Invite vs Direct Creation).
+- ✅ Direct Staff Account Creation (`app/api/team/create-staff/route.ts` & `components/settings/team-management.tsx`) with role selection (`Manager` vs `Staff`) and instant login credentials.
 - ✅ Setup email confirmation handling (`app/setup/page.tsx`) with dedicated verification notice screen.
 - ✅ Automated End-to-End Test Suite (`scripts/test-e2e.mjs`, `npm run test:e2e`).
 
