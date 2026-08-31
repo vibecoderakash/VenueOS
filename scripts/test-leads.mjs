@@ -35,6 +35,15 @@ async function runTests() {
   const test1 = createLeadSchema.safeParse({ ...validBase, event_type: '' });
   assert('TEST 1: Submit with Event Type empty is rejected', !test1.success);
 
+  const testPhoneShort = createLeadSchema.safeParse({ ...validBase, phone: '987654321' });
+  assert('TEST 1A: Phone number with 9 digits is rejected', !testPhoneShort.success);
+
+  const testPhoneLetters = createLeadSchema.safeParse({ ...validBase, phone: '98765abc10' });
+  assert('TEST 1B: Phone number containing letters is rejected', !testPhoneLetters.success);
+
+  const testEmailInvalid = createLeadSchema.safeParse({ ...validBase, email: 'family.test@example' });
+  assert('TEST 1C: Invalid email is rejected', !testEmailInvalid.success);
+
   // TEST 2: Submit with Event Date neither selected nor marked Not Fixed -> Rejected
   const test2 = createLeadSchema.safeParse({ ...validBase, event_date_status: undefined, event_date: undefined });
   assert('TEST 2: Submit with Event Date status missing is rejected', !test2.success);

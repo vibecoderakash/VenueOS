@@ -75,8 +75,13 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
     }
 
     // 2. Phone Number Validation
-    if (!normalizedPhone || normalizedPhone.length < 7) {
-      setValidationError('Please enter a valid phone number.');
+    if (!/^\d{10}$/.test(normalizedPhone)) {
+      setValidationError('Phone number must be exactly 10 digits.');
+      return;
+    }
+
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setValidationError('Please enter a valid email address.');
       return;
     }
 
@@ -284,9 +289,12 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                 <input
                   type="tel"
                   required
+                  inputMode="numeric"
+                  maxLength={10}
+                  pattern="[0-9]{10}"
                   placeholder="e.g. 9876543210"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   className={inputClass}
                   style={inputStyle}
                 />

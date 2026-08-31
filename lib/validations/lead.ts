@@ -1,11 +1,10 @@
 import { z } from 'zod';
 import type { BanquetEventType, EventDateStatus, GuestCountStatus, LeadPriority, LeadSource, LeadStatus } from '@/types/database';
 
-// Utility to clean and normalize phone numbers (e.g. +91 98765-43210 -> 9876543210 or formatted)
+// Utility to normalize phone numbers before applying the strict 10-digit rule.
 export function normalizePhone(rawPhone: string): string {
   if (!rawPhone) return '';
-  // Remove spaces, hyphens, parentheses
-  const cleaned = rawPhone.replace(/[\s\-\(\)]/g, '');
+  const cleaned = rawPhone.replace(/\D/g, '');
   return cleaned;
 }
 
@@ -74,8 +73,7 @@ const rawCreateLeadSchema = z.object({
   phone: z
     .string({ required_error: 'Phone number is required.' })
     .trim()
-    .min(7, 'Please enter a valid phone number.')
-    .max(20, 'Phone number cannot exceed 20 characters.'),
+    .regex(/^\d{10}$/, 'Phone number must be exactly 10 digits.'),
   email: z
     .string()
     .trim()
