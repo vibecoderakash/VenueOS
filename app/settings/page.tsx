@@ -22,6 +22,7 @@ import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
 import { useTheme, ThemeMode } from '@/lib/theme-context';
 import { TeamManagement } from '@/components/settings/team-management';
+import { HealthDiagnostics } from '@/components/settings/health-diagnostics';
 
 // ============================================================
 // Reusable form field style
@@ -751,7 +752,10 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {/* 5. Account & Session Management */}
+      {/* 5. System & Health Diagnostics (Owner only) */}
+      <HealthDiagnostics />
+
+      {/* 6. Account & Session Management */}
       <AccountSessionSection />
     </div>
   );

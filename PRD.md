@@ -727,18 +727,18 @@ A feature should not be considered complete merely because it visually works.
 - ✅ Dedicated `public.system_audit_logs` table for tracking security lifecycle events.
 - ✅ Audit logging integrated into `public.delete_current_organization` RPC prior to cascaded deletion.
 - ✅ Verified that Supabase service-role keys are strictly server-side (`lib/supabase/admin.ts`) and never leaked to browser code.
-- ✅ Automated security, validation, & pagination test suites (`test-security.mjs`, `test-api.mjs`, `test-leads.mjs`, `test-pagination.mjs`).
+- ✅ Automated test suites (`test-security.mjs`, `test-api.mjs`, `test-leads.mjs`, `test-pagination.mjs`, `test-recovery.mjs`) — 65 automated tests passing with 0 failures.
 - ✅ Lead pagination & 5-at-a-time infinite scrolling with debounced filtering, skeleton loading states, race-condition prevention, and end-of-total-leads indicators.
+- ✅ Development-only database seed script (`scripts/seed-database.mjs`, `npm run seed`) creating owner, manager, sales staff, and 15 realistic banquet inquiries with discussions and logs.
+- ✅ Password recovery & reset flow (`/forgot-password`, `/reset-password`, and validation test suite `test-recovery.mjs`).
+- ✅ Optimistic UI updates with resilient state rollback on Supabase mutation failure.
+- ✅ Owner Health & Security Diagnostics dashboard in Settings (`/api/health/diagnostics`, `components/settings/health-diagnostics.tsx`) with latency monitoring, live tenant table stats, RLS status, orphan user checker, and system audit log viewer.
 
 ### 21.2 Active Recommended Backlog
 1. Staff invitation flow (email invites & role assignment).
 2. Email confirmation handling during setup.
-3. Password reset testing & recovery flow.
-4. Optimistic UI updates (after database persistence confirmation).
-5. Development-only database seed command instead of hardcoded demo data.
-6. Database health/status screen for owners.
-7. Automated end-to-end tests for setup rollback, deletion/Auth cleanup, inactive read-only access, and orphan cleanup.
-8. Banquet V2 features (Bookings, Calendar Availability, Quotations, Payments, Analytics).
+3. Automated end-to-end tests for setup rollback, deletion/Auth cleanup, inactive read-only access, and orphan cleanup.
+4. Banquet V2 features (Bookings, Calendar Availability, Quotations, Payments, Analytics).
 
 ---
 

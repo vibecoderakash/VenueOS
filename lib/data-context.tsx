@@ -152,6 +152,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const saveLeads = (newLeads: Lead[]) => {
+    const previousLeads = leads;
     setLeads(newLeads);
     const supabase = createBrowserClient();
     if (!supabase) return;
@@ -161,7 +162,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       if (!oldLead || JSON.stringify(oldLead) === JSON.stringify(lead) || !lead.id) return;
       const { owner, discussions: _discussions, activity: _activity, id: _id, organization_id: _organizationId, created_at: _createdAt, updated_at: _updatedAt, ...updates } = lead;
       void supabase.from('leads').update(updates).eq('id', lead.id).then(({ error }) => {
-        if (error) console.error('Supabase lead update failed:', error.message);
+        if (error) {
+          console.error('Supabase lead update failed, rolling back:', error.message);
+          setLeads(previousLeads);
+        }
       });
     });
   };
