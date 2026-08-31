@@ -189,6 +189,11 @@ export default function SetupPage() {
       return;
     }
 
+    if (!phone.trim()) {
+      setErrorMsg('Please enter your phone number.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -393,7 +398,7 @@ export default function SetupPage() {
             {/* Phone Number */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Phone Number
+                Phone Number <span className="text-rose-500">*</span>
               </label>
               <div className="relative flex items-center">
                 <div className="absolute left-3.5 text-slate-400 pointer-events-none">
@@ -401,6 +406,7 @@ export default function SetupPage() {
                 </div>
                 <input
                   type="tel"
+                  required
                   autoComplete="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}

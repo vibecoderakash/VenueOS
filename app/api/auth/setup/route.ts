@@ -38,7 +38,11 @@ export async function POST(req: Request) {
     }
 
     const cleanName = full_name.trim();
-    const cleanPhone = phone ? String(phone).trim() : null;
+    const cleanPhone = typeof phone === 'string' ? phone.trim() : '';
+
+    if (!cleanPhone) {
+      return NextResponse.json({ error: 'Phone number is required.' }, { status: 400 });
+    }
 
     const supabase = await createServerSupabaseClient();
     if (!supabase) {
