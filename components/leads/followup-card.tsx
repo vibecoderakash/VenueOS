@@ -11,6 +11,7 @@ import { Lead } from '@/types/database';
 import { getFollowUpStatus, formatDateTime, formatForDateTimeLocal } from '@/lib/utils';
 import { useData } from '@/lib/data-context';
 import { addDays, setHours, setMinutes, startOfTomorrow, nextMonday } from 'date-fns';
+import { DateTimeField } from '@/components/ui/date-time-field';
 
 interface FollowupCardProps {
   lead: Lead;
@@ -228,17 +229,14 @@ export function FollowupCard({ lead }: FollowupCardProps) {
             >
               Follow-up Date & Time <span className="text-[10px]">(DD/MM/YYYY, HH:MM)</span>
             </label>
-            <input
-              type="datetime-local"
-              lang="en-GB"
-              step="60"
-              aria-label="Follow-up date and time (DD/MM/YYYY, HH:MM)"
+            <DateTimeField
               required
               value={followUpDate}
-              onChange={(e) => {
-                setFollowUpDate(e.target.value);
+              onChange={(value) => {
+                setFollowUpDate(value);
                 setValidationError('');
               }}
+              aria-label="Follow-up date and time (DD/MM/YYYY, HH:MM)"
               className="w-full rounded-[6px] px-2 py-1 text-[12px] focus:outline-none"
               style={{
                 backgroundColor: 'var(--surface-secondary)',
