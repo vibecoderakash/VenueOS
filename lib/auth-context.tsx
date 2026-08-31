@@ -398,7 +398,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: msg };
       }
     },
-    [handleSession]
+    [handleSession, checkOwnerExists]
   );
 
   // Sign Out implementation
