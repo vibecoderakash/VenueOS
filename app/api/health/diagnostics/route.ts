@@ -43,13 +43,20 @@ export async function GET(req: NextRequest) {
     }
 
     // 2. Aggregate Table Counts for Current Tenant
-    const [leadsRes, discussionsRes, activityRes, profilesRes, auditLogsRes] = await Promise.all([
+    const [leadsRes, discussionsRes, activityRes, profilesRes] = await Promise.all([
       supabase.from('leads').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
       supabase.from('lead_discussions').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
       supabase.from('lead_activity').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('organization_id', orgId),
-      supabase.from('system_audit_logs').select('*').order('created_at', { ascending: false }).limit(10),
     ]);
+
+    let auditLogs: Array<Record<string, unknown>> = [];
+    try {
+      const { data } = await supabase.from('system_audit_logs').select('*').order('created_at', { ascending: false }).limit(10);
+      if (data) auditLogs = data;
+    } catch {
+      // Optional audit table
+    }
 
     // 3. Orphan Check (via Admin Client if available)
     let orphanCount = 0;
@@ -80,7 +87,7 @@ export async function GET(req: NextRequest) {
         dataIsolationScoping: 'verified_organization_id',
         orphanAuthUsers: orphanCount,
       },
-      recentAuditLogs: auditLogsRes.data || [],
+      recentAuditLogs: auditLogs,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Diagnostics query failed';
