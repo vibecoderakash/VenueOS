@@ -17,6 +17,7 @@ export async function GET() {
       .from('profiles')
       .select('id')
       .eq('role', 'owner')
+      .not('organization_id', 'is', null)
       .limit(1);
 
     if (error) {

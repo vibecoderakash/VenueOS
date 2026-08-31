@@ -53,6 +53,7 @@ export async function POST(req: Request) {
       .from('profiles')
       .select('id')
       .eq('role', 'owner')
+      .not('organization_id', 'is', null)
       .limit(1);
 
     if (queryError) {
