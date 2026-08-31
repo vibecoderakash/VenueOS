@@ -2,11 +2,11 @@
 
 **Document type:** Living Product + Development PRD  
 **Project:** VenueOS  
-**Current baseline date:** 2026-08-31  
-**Status:** Active development baseline  
+**Current baseline date:** 2026-09-01  
+**Status:** VenueOS V1 Feature Complete & Production Hardened  
 **Primary development environment:** `C:\Users\akash\Desktop\AI Builder\VenueOS`  
-**Frontend:** Next.js  
-**Backend:** Supabase  
+**Frontend:** Next.js (App Router, Tailwind CSS)  
+**Backend:** Supabase (PostgreSQL, Row-Level Security, Auth, RPCs)  
 **Local development:** `npm run dev`  
 **Local URL:** `http://localhost:3000`
 
@@ -717,30 +717,29 @@ A feature should not be considered complete merely because it visually works.
 
 ---
 
-# 21. Current Recommended Work
+# 21. VenueOS V1 Completion & Roadmap
 
-### 21.1 Completed Hardening (Current Baseline)
-- ✅ Row-Level Security (RLS) policies verified and hardened across all tables (`organizations`, `profiles`, `leads`, `lead_discussions`, `lead_activity`, `lead_assignment_history`, `system_audit_logs`).
-- ✅ Database foreign keys with `ON DELETE CASCADE` verified across all tenant boundaries.
-- ✅ Privacy-preserving setup check RPC (`public.check_has_owner()`) eliminating PII exposure to anonymous visitors.
-- ✅ Standardized API error codes and structured error handling helpers (`createSafeErrorResponse`, `API_ERROR_CODES`).
-- ✅ Dedicated `public.system_audit_logs` table for tracking security lifecycle events.
-- ✅ Audit logging integrated into `public.delete_current_organization` RPC prior to cascaded deletion.
-- ✅ Verified that Supabase service-role keys are strictly server-side (`lib/supabase/admin.ts`) and never leaked to browser code.
-- ✅ Automated test suites (`test-security.mjs`, `test-api.mjs`, `test-leads.mjs`, `test-pagination.mjs`, `test-recovery.mjs`, `test-e2e.mjs`) — 85 automated tests passing with 0 failures (`npm test`).
-- ✅ Lead pagination & 5-at-a-time infinite scrolling with debounced filtering, skeleton loading states, race-condition prevention, and end-of-total-leads indicators.
-- ✅ Development-only database seed script (`scripts/seed-database.mjs`, `npm run seed`) creating owner, manager, sales staff, and 15 realistic banquet inquiries with discussions and logs.
-- ✅ Password recovery & reset flow (`/forgot-password`, `/reset-password`, and validation test suite `test-recovery.mjs`).
-- ✅ Optimistic UI updates with resilient state rollback on Supabase mutation failure.
-- ✅ Owner Health & Security Diagnostics dashboard in Settings (`/api/health/diagnostics`, `components/settings/health-diagnostics.tsx`) with latency monitoring, live tenant table stats, RLS status, orphan user checker, and system audit log viewer.
-- ✅ Direct Staff Account Creation (`app/api/team/create-staff/route.ts` & `components/settings/team-management.tsx`) with role selection (`Manager` vs `Staff`), mandatory password enforcement, and instant login credentials.
-- ✅ Mobile & Tablet UI/UX Polish (`components/layout/mobile-bottom-nav.tsx`, `MobileSidebarDrawer`, touch-friendly lead cards, bottom sheets for create lead modal, iOS zoom prevention, 2-column mobile KPI cards).
-- ✅ Custom Lead Tags & Loss Reason Capture (`components/leads/loss-reason-modal.tsx`, `EventContextCard`, `CreateLeadModal`, `LeadFilters`, `LeadList`, and `/reports` analytics breakdown).
-- ✅ Setup email confirmation handling (`app/setup/page.tsx`) with dedicated verification notice screen.
-- ✅ Automated End-to-End Test Suite (`scripts/test-e2e.mjs`, `npm run test:e2e`).
+### 21.1 VenueOS V1 Delivered Capabilities (100% Complete)
+- ✅ **Multi-Tenant Foundation & Atomic Setup:** Atomic Owner Setup (`/setup`) with email verification notice, atomic rollback protection, and privacy-preserving owner existence check (`public.check_has_owner()`).
+- ✅ **Row-Level Security (RLS) & Multi-Tenant Isolation:** Verified and hardened across all tables (`organizations`, `profiles`, `leads`, `lead_discussions`, `lead_activity`, `lead_assignment_history`, `system_audit_logs`) with `ON DELETE CASCADE` foreign keys.
+- ✅ **Backend Security & Safe Key Management:** Supabase service-role keys are strictly server-side (`lib/supabase/admin.ts`) and never leaked to browser bundles.
+- ✅ **Banquet Lead Pipeline & CRM Engine:** Strict validation (10-digit Indian phone normalization, flexible event date/guest count handling, duplicate phone detection), 5-at-a-time infinite scroll with debounced live search, and stage progression.
+- ✅ **Custom Lead Tags & Loss Reason Intelligence:** Modal reason capture (`Budget Issue`, `Date Unavailable`, `Booked Competitor`, `Cancelled Plan`, `Unresponsive`, `Other`), popular quick-select tags (`VIP Client`, `High Budget`, `Lawn Preference`, `Pure Veg`, etc.), custom tag creator, and pipeline filtering.
+- ✅ **Team Management & Role-Based Access:** 3-tier role hierarchy (`Owner`, `Manager`, `Staff`), direct staff provisioning with mandatory passwords, and inactive user read-only enforcement (`403 FORBIDDEN_DEACTIVATED`).
+- ✅ **Lead Assignment & Ownership Audit:** Atomic lead reassignment with full historical assignment logging in `lead_assignment_history`.
+- ✅ **Customer Discussions & Audit Timeline:** Threaded notes with inline edit and delete capabilities, and an immutable activity timeline for every inquiry.
+- ✅ **Mobile & Tablet UI/UX Polish:** Fixed 1-thumb bottom navigation bar (`components/layout/mobile-bottom-nav.tsx`), slide-over mobile sidebar drawer, bottom-sheet modal ergonomics, iOS Safari zoom prevention ($16\text{px}$ inputs), and touch targets $\ge 44\text{px}$.
+- ✅ **Owner Health & Security Diagnostics:** Live latency monitoring, tenant table stats, RLS status checker, orphan user detector, and system audit log viewer.
+- ✅ **Danger Zone Cascaded Deletion:** Safe, irreversible tenant deletion that cleanly scrubs all organization tables and auth users.
+- ✅ **Business Intelligence & Reporting:** Conversion win rates, follow-up adherence, sales rep leaderboard, marketing channel attribution, and root-cause lost inquiry breakdown.
+- ✅ **Automated Test Suites:** 85 automated tests passing with 0 failures across 6 suites (`npm test`).
 
-### 21.2 Active Recommended Backlog
-1. Banquet V2 features (Bookings, Calendar Availability, Quotations, Payments, Analytics).
+### 21.2 Upcoming VenueOS V2 Roadmap
+1. **Banquet Bookings & Slot Calendar:** Date/time slot locking, Hall availability calendar, double-booking prevention.
+2. **Function Sheets & Banquet Event Orders (BEO):** Food menu selection, decor specs, audio/visual requirements, itinerary timeline.
+3. **Quotation & PDF Generator:** Custom package builder, quotation generation, and 1-click printable PDF.
+4. **Advance Payments & Billing:** Token advances, milestone payment tracking, GST invoices, and receipts.
+5. **Advanced Floor & Kitchen Management:** Live operational dashboards for kitchen staff and floor managers.
 
 ---
 
