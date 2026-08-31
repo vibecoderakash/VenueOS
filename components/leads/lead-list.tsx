@@ -29,11 +29,49 @@ import { useData } from '@/lib/data-context';
 
 interface LeadListProps {
   leads: Lead[];
+  isLoading?: boolean;
   onResetFilters?: () => void;
 }
 
-export function LeadList({ leads, onResetFilters }: LeadListProps) {
+export function LeadList({ leads, isLoading = false, onResetFilters }: LeadListProps) {
   const { profiles, getDiscussionsByLeadId, organization } = useData();
+
+  if (isLoading && leads.length === 0) {
+    return (
+      <div className="space-y-2.5">
+        {[1, 2, 3, 4, 5].map((idx) => (
+          <div
+            key={idx}
+            className="rounded-[12px] p-4 sm:p-4.5 border animate-pulse"
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderColor: 'var(--border)',
+            }}
+          >
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-36 rounded" style={{ backgroundColor: 'var(--surface-secondary)' }} />
+                  <div className="h-4 w-16 rounded-full" style={{ backgroundColor: 'var(--surface-secondary)' }} />
+                  <div className="h-4 w-14 rounded-full" style={{ backgroundColor: 'var(--surface-secondary)' }} />
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-3 w-24 rounded" style={{ backgroundColor: 'var(--surface-secondary)' }} />
+                  <div className="h-3 w-28 rounded" style={{ backgroundColor: 'var(--surface-secondary)' }} />
+                  <div className="h-3 w-20 rounded" style={{ backgroundColor: 'var(--surface-secondary)' }} />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-16 rounded-[6px]" style={{ backgroundColor: 'var(--surface-secondary)' }} />
+                <div className="h-7 w-20 rounded-[6px]" style={{ backgroundColor: 'var(--surface-secondary)' }} />
+                <div className="h-7 w-16 rounded-[6px]" style={{ backgroundColor: 'var(--surface-secondary)' }} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (leads.length === 0) {
     return (

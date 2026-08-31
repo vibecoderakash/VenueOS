@@ -131,7 +131,12 @@ export async function GET(req: NextRequest) {
   const supabase = await createClient();
   if (!supabase) return createSafeErrorResponse('Supabase is not configured.', API_ERROR_CODES.DATABASE_UNAVAILABLE, 503);
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const authHeader = req.headers.get('authorization');
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  const { data: { user } } = token
+    ? await supabase.auth.getUser(token)
+    : await supabase.auth.getUser();
+
   if (!user) return createSafeErrorResponse('Supabase session was not found by the server.', API_ERROR_CODES.UNAUTHORIZED, 401);
 
   const profileResult = await supabase.from('profiles').select('organization_id').eq('id', user.id).maybeSingle();
@@ -141,6 +146,7 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url);
   const positiveInt = (value: string | null, fallback: number) => {
+    if (!value || value.trim() === '') return fallback;
     const parsed = Number(value);
     return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
   };
@@ -165,6 +171,7 @@ export async function GET(req: NextRequest) {
     .eq('organization_id', profileResult.data.organization_id);
 
   if (archived) query = query.not('archived_at', 'is', null);
+  else query = query.is('archived_at', null);
   if (status && status !== 'All') query = query.eq('status', status);
   if (priority && priority !== 'All') query = query.eq('priority', priority);
   if (ownerId && ownerId !== 'All') query = query.eq('owner_id', ownerId);

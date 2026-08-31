@@ -53,7 +53,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  const resetForm = () => {
+  const resetForm = React.useCallback(() => {
     setCustomerName('');
     setPhone('');
     setEmail('');
@@ -71,13 +71,13 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
     setFollowUpNote('');
     setValidationError(null);
     setIsSubmitting(false);
-  };
+  }, [currentProfile.id]);
 
   React.useEffect(() => {
     if (isOpen) {
       resetForm();
     }
-  }, [isOpen, currentProfile.id]);
+  }, [isOpen, resetForm]);
 
   if (!isOpen) return null;
 

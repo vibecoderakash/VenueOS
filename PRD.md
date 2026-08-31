@@ -328,14 +328,18 @@ The current lead form supports:
 - Saving a follow-up requires both a valid date/time and a non-empty action note; the database enforces the same rule.
 - Follow-up date/time is displayed consistently as `DD/MM/YYYY HH:MM`, independent of the browser or operating-system locale, while retaining the native date-time picker.
 
-## 8.4 Lead List Loading
+## 8.4 Lead List Loading & Infinite Scroll
 
-- The lead list requests five records at a time from the Supabase-backed API.
-- Scrolling to the bottom requests the next five records through server-side pagination.
-- Search, filters, sorting, and archive mode reset the list to the first page.
+- The lead list requests five records at a time from the Supabase-backed API (`limit=5`, offset-based).
+- Scrolling to the bottom triggers an IntersectionObserver (200px margin) that requests the next five records via server-side pagination.
+- Concurrency guard (`isFetchingRef`) prevents duplicate concurrent fetches on rapid scroll.
+- Search queries are debounced (300ms) before querying the backend.
+- Initial load and filter resets display skeleton loading placeholders to prevent layout shift and avoid flashing false empty states.
+- When all leads are loaded (`!hasMore && loadedLeads.length > 0`), the list renders a distinct end-of-total-leads indicator: `• End of total leads (X inquiries)`.
+- When 0 records match search or filters, a clean "No Leads Found" empty state with a "Clear Filters" button is displayed.
 - The lead list route does not preload the complete lead dataset into browser state.
 
-## 8.3 Implemented Lead Operations
+## 8.5 Implemented Lead Operations
 
 The application already supports:
 
@@ -350,8 +354,9 @@ The application already supports:
 - Restore lead
 - Add discussions
 - Persist and display activity logs
+- Server-side 5-at-a-time pagination and infinite scroll
 
-## 8.4 Lead Verification Workflow
+## 8.6 Lead Verification Workflow
 
 When validating a lead feature:
 
@@ -363,6 +368,7 @@ When validating a lead feature:
 6. Test edit/status/priority/owner changes.
 7. Test archive and restore.
 8. Test discussions and activity persistence.
+9. Test pagination and infinite scrolling.
 
 ---
 
@@ -721,18 +727,18 @@ A feature should not be considered complete merely because it visually works.
 - ✅ Dedicated `public.system_audit_logs` table for tracking security lifecycle events.
 - ✅ Audit logging integrated into `public.delete_current_organization` RPC prior to cascaded deletion.
 - ✅ Verified that Supabase service-role keys are strictly server-side (`lib/supabase/admin.ts`) and never leaked to browser code.
-- ✅ Automated security & API test suites (`scripts/test-security.mjs`, `scripts/test-api.mjs`).
+- ✅ Automated security, validation, & pagination test suites (`test-security.mjs`, `test-api.mjs`, `test-leads.mjs`, `test-pagination.mjs`).
+- ✅ Lead pagination & 5-at-a-time infinite scrolling with debounced filtering, skeleton loading states, race-condition prevention, and end-of-total-leads indicators.
 
 ### 21.2 Active Recommended Backlog
 1. Staff invitation flow (email invites & role assignment).
 2. Email confirmation handling during setup.
 3. Password reset testing & recovery flow.
-4. Lead pagination and advanced filtering.
-5. Optimistic UI updates (after database persistence confirmation).
-6. Development-only database seed command instead of hardcoded demo data.
-7. Database health/status screen for owners.
-8. Automated end-to-end tests for setup rollback, deletion/Auth cleanup, inactive read-only access, and orphan cleanup.
-9. Banquet V2 features (Bookings, Calendar Availability, Quotations, Payments, Analytics).
+4. Optimistic UI updates (after database persistence confirmation).
+5. Development-only database seed command instead of hardcoded demo data.
+6. Database health/status screen for owners.
+7. Automated end-to-end tests for setup rollback, deletion/Auth cleanup, inactive read-only access, and orphan cleanup.
+8. Banquet V2 features (Bookings, Calendar Availability, Quotations, Payments, Analytics).
 
 ---
 

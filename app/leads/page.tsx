@@ -15,8 +15,10 @@ function LeadsContent() {
   const [loadedLeads, setLoadedLeads] = useState<Lead[]>([]);
   const [totalLeads, setTotalLeads] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const isFetchingRef = useRef(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
   const initialStatus = (searchParams.get('status') as LeadStatus) || 'All';
@@ -36,6 +38,15 @@ function LeadsContent() {
     sortOrder: 'desc',
   });
 
+  // Debounced search query
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(filters.searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [filters.searchQuery]);
+
   const handleFilterChange = (updates: Partial<LeadFilterCriteria>) => {
     setFilters((prev) => ({ ...prev, ...updates }));
   };
@@ -53,14 +64,23 @@ function LeadsContent() {
       sortBy: 'created_at',
       sortOrder: 'desc',
     });
+    setDebouncedSearch('');
   };
 
   const fetchLeads = useCallback(async (offset: number, replace: boolean) => {
-    setIsLoadingMore(true);
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
+    if (replace) {
+      setIsInitialLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
+
     const params = new URLSearchParams({
       offset: String(offset),
       limit: '5',
-      search: filters.searchQuery,
+      search: debouncedSearch,
       status: filters.status,
       priority: filters.priority,
       ownerId: filters.ownerId,
@@ -71,6 +91,7 @@ function LeadsContent() {
       sortBy: filters.sortBy,
       sortOrder: filters.sortOrder,
     });
+
     try {
       const response = await fetch(`/api/leads?${params.toString()}`);
       const payload = await response.json().catch(() => ({}));
@@ -83,25 +104,29 @@ function LeadsContent() {
       console.error('Paginated lead loading failed:', error);
       if (replace) setLoadedLeads([]);
     } finally {
+      setIsInitialLoading(false);
       setIsLoadingMore(false);
+      isFetchingRef.current = false;
     }
-  }, [filters]);
+  }, [debouncedSearch, filters.status, filters.priority, filters.ownerId, filters.source, filters.eventType, filters.followUpState, filters.showArchived, filters.sortBy, filters.sortOrder]);
 
+  // Initial load and filter change trigger
   useEffect(() => {
     void fetchLeads(0, true);
   }, [fetchLeads, refreshNonce]);
 
+  // Infinite scroll trigger via IntersectionObserver
   useEffect(() => {
     const target = loadMoreRef.current;
     if (!target || !hasMore) return;
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting && !isLoadingMore) {
+      if (entries[0]?.isIntersecting && !isFetchingRef.current && !isInitialLoading && hasMore) {
         void fetchLeads(loadedLeads.length, false);
       }
-    }, { rootMargin: '240px' });
+    }, { rootMargin: '200px' });
     observer.observe(target);
     return () => observer.disconnect();
-  }, [fetchLeads, hasMore, isLoadingMore, loadedLeads.length]);
+  }, [fetchLeads, hasMore, isInitialLoading, loadedLeads.length]);
 
   return (
     <div className="space-y-4">
@@ -123,7 +148,7 @@ function LeadsContent() {
               Leads
             </span>
             <span className="text-[12px]" style={{ color: 'var(--foreground-muted)' }}>
-              • {totalLeads} inquiries found
+              • {totalLeads} {totalLeads === 1 ? 'inquiry' : 'inquiries'} found
             </span>
           </div>
           <h1 className="text-[18px] font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
@@ -136,7 +161,7 @@ function LeadsContent() {
 
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] text-[13px] font-semibold transition-colors self-start sm:self-auto"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-[8px] text-[13px] font-semibold transition-colors self-start sm:self-auto cursor-pointer"
           style={{
             backgroundColor: 'var(--primary)',
             color: 'var(--primary-fg)',
@@ -157,10 +182,31 @@ function LeadsContent() {
       />
 
       {/* Lead List */}
-      <LeadList leads={loadedLeads} onResetFilters={handleReset} />
-      <div ref={loadMoreRef} className="min-h-8 flex items-center justify-center">
-        {isLoadingMore && <span className="text-[12px]" style={{ color: 'var(--foreground-muted)' }}>Loading more leads...</span>}
-        {!isLoadingMore && loadedLeads.length > 0 && !hasMore && <span className="text-[12px]" style={{ color: 'var(--foreground-muted)' }}>No more leads</span>}
+      <LeadList leads={loadedLeads} isLoading={isInitialLoading} onResetFilters={handleReset} />
+
+      {/* Bottom Loading / Sentinel / End of Total Leads Indicator */}
+      <div ref={loadMoreRef} className="py-2">
+        {isLoadingMore && (
+          <div className="py-3 flex items-center justify-center gap-2 text-[12px]" style={{ color: 'var(--foreground-muted)' }}>
+            <div className="w-3.5 h-3.5 border-2 rounded-full animate-spin border-t-transparent" style={{ borderColor: 'var(--primary)', borderTopColor: 'transparent' }} />
+            <span>Loading next leads...</span>
+          </div>
+        )}
+        {!isInitialLoading && !isLoadingMore && loadedLeads.length > 0 && !hasMore && (
+          <div className="py-4 text-center">
+            <div
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[12px] font-medium transition-colors"
+              style={{
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--foreground-muted)',
+              }}
+            >
+              <span>•</span>
+              <span>End of total leads ({totalLeads} {totalLeads === 1 ? 'inquiry' : 'inquiries'})</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Create Lead Modal */}
