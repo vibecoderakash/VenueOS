@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { usePathname } from 'next/navigation';
 import { 
   Lead, 
   Profile, 
@@ -65,6 +66,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const { profile: authProfile, isAuthenticated: authIsAuthenticated } = useAuth();
+  const pathname = usePathname();
 
   const assertCanMutate = () => {
     if (authProfile && (authProfile.is_active === false || authProfile.active === false)) {
@@ -92,7 +94,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       const [orgResult, profilesResult, leadsResult, discussionsResult, activityResult] = await Promise.all([
         supabase.from('organizations').select('*').eq('id', authProfile.organization_id).maybeSingle(),
         supabase.from('profiles').select('*').eq('organization_id', authProfile.organization_id).order('created_at', { ascending: true }),
-        supabase.from('leads').select('*').eq('organization_id', authProfile.organization_id).order('created_at', { ascending: false }),
+        pathname === '/leads'
+          ? Promise.resolve({ data: null, error: null })
+          : supabase.from('leads').select('*').eq('organization_id', authProfile.organization_id).order('created_at', { ascending: false }),
         supabase.from('lead_discussions').select('*').eq('organization_id', authProfile.organization_id).order('created_at', { ascending: true }),
         supabase.from('lead_activity').select('*').eq('organization_id', authProfile.organization_id).order('created_at', { ascending: false }),
       ]);
@@ -109,7 +113,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     };
     void loadFromSupabase().catch((error) => { console.error('Supabase data load failed:', error); setIsLoading(false); });
     return () => { cancelled = true; };
-  }, [authProfile, authIsAuthenticated]);
+  }, [authProfile, authIsAuthenticated, pathname]);
 
 
   // In-memory UI state helpers. Supabase is the only business-data store.

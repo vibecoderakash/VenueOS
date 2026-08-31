@@ -328,6 +328,13 @@ The current lead form supports:
 - Saving a follow-up requires both a valid date/time and a non-empty action note; the database enforces the same rule.
 - Follow-up date/time is displayed consistently as `DD/MM/YYYY HH:MM`, independent of the browser or operating-system locale, while retaining the native date-time picker.
 
+## 8.4 Lead List Loading
+
+- The lead list requests five records at a time from the Supabase-backed API.
+- Scrolling to the bottom requests the next five records through server-side pagination.
+- Search, filters, sorting, and archive mode reset the list to the first page.
+- The lead list route does not preload the complete lead dataset into browser state.
+
 ## 8.3 Implemented Lead Operations
 
 The application already supports:

@@ -127,6 +127,71 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
-  return NextResponse.json({ status: 'ok', endpoint: '/api/leads' });
+export async function GET(req: NextRequest) {
+  const supabase = await createClient();
+  if (!supabase) return createSafeErrorResponse('Supabase is not configured.', API_ERROR_CODES.DATABASE_UNAVAILABLE, 503);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return createSafeErrorResponse('Supabase session was not found by the server.', API_ERROR_CODES.UNAUTHORIZED, 401);
+
+  const profileResult = await supabase.from('profiles').select('organization_id').eq('id', user.id).maybeSingle();
+  if (profileResult.error || !profileResult.data?.organization_id) {
+    return createSafeErrorResponse('Your profile is not connected to an organization in Supabase.', API_ERROR_CODES.FORBIDDEN_INSUFFICIENT_ROLE, 403);
+  }
+
+  const url = new URL(req.url);
+  const positiveInt = (value: string | null, fallback: number) => {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed >= 0 ? parsed : fallback;
+  };
+  const offset = positiveInt(url.searchParams.get('offset'), 0);
+  const limit = Math.min(50, Math.max(1, positiveInt(url.searchParams.get('limit'), 5)));
+  const search = url.searchParams.get('search')?.trim() || '';
+  const status = url.searchParams.get('status');
+  const priority = url.searchParams.get('priority');
+  const ownerId = url.searchParams.get('ownerId');
+  const source = url.searchParams.get('source');
+  const eventType = url.searchParams.get('eventType');
+  const followUp = url.searchParams.get('followUp');
+  const archived = url.searchParams.get('archived') === 'true';
+  const sortBy = ['created_at', 'event_date', 'next_follow_up_at', 'customer_name', 'priority'].includes(url.searchParams.get('sortBy') || '')
+    ? url.searchParams.get('sortBy')!
+    : 'created_at';
+  const ascending = url.searchParams.get('sortOrder') === 'asc';
+
+  let query = supabase
+    .from('leads')
+    .select('*', { count: 'exact' })
+    .eq('organization_id', profileResult.data.organization_id);
+
+  if (archived) query = query.not('archived_at', 'is', null);
+  if (status && status !== 'All') query = query.eq('status', status);
+  if (priority && priority !== 'All') query = query.eq('priority', priority);
+  if (ownerId && ownerId !== 'All') query = query.eq('owner_id', ownerId);
+  if (source && source !== 'All') query = query.eq('source', source);
+  if (eventType && eventType !== 'All') query = query.eq('event_type', eventType);
+  if (search) {
+    const escaped = search.replace(/[%(),]/g, '');
+    query = query.or(`customer_name.ilike.%${escaped}%,phone.ilike.%${escaped}%,requirement.ilike.%${escaped}%`);
+  }
+
+  const now = new Date();
+  if (followUp === 'None') query = query.is('next_follow_up_at', null);
+  if (followUp === 'Overdue') query = query.lt('next_follow_up_at', now.toISOString());
+  if (followUp === 'Today') {
+    const start = new Date(now); start.setHours(0, 0, 0, 0);
+    const end = new Date(start); end.setDate(end.getDate() + 1);
+    query = query.gte('next_follow_up_at', start.toISOString()).lt('next_follow_up_at', end.toISOString());
+  }
+  if (followUp === 'Upcoming') {
+    const end = new Date(now); end.setHours(23, 59, 59, 999);
+    query = query.gt('next_follow_up_at', end.toISOString());
+  }
+
+  const { data, error, count } = await query
+    .order(sortBy, { ascending, nullsFirst: false })
+    .range(offset, offset + limit - 1);
+  if (error) return createSafeErrorResponse(error.message, API_ERROR_CODES.DATABASE_UNAVAILABLE, 400);
+
+  return NextResponse.json({ leads: data || [], total: count || 0, offset, limit, hasMore: offset + (data?.length || 0) < (count || 0) });
 }

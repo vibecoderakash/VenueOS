@@ -1,20 +1,23 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
-import { useData } from '@/lib/data-context';
 import { LeadFilterCriteria, LeadStatus } from '@/types/database';
 import { LeadFilters } from '@/components/leads/lead-filters';
 import { LeadList } from '@/components/leads/lead-list';
 import { CreateLeadModal } from '@/components/leads/create-lead-modal';
-import { getFollowUpStatus } from '@/lib/utils';
+import { Lead } from '@/types/database';
 
 function LeadsContent() {
   const searchParams = useSearchParams();
-  const { leads, getDiscussionsByLeadId } = useData();
-
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [loadedLeads, setLoadedLeads] = useState<Lead[]>([]);
+  const [totalLeads, setTotalLeads] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [refreshNonce, setRefreshNonce] = useState(0);
 
   const initialStatus = (searchParams.get('status') as LeadStatus) || 'All';
   const initialFollowUp = (searchParams.get('followUp') as LeadFilterCriteria['followUpState']) || 'All';
@@ -52,42 +55,53 @@ function LeadsContent() {
     });
   };
 
-  const filteredLeads = useMemo(() => {
-    return leads.filter((lead) => {
-      if (!filters.showArchived && lead.archived_at) return false;
-      if (filters.showArchived && !lead.archived_at) return false;
-
-      if (filters.status !== 'All' && lead.status !== filters.status) return false;
-      if (filters.priority !== 'All' && lead.priority !== filters.priority) return false;
-      if (filters.ownerId !== 'All' && lead.owner_id !== filters.ownerId) return false;
-      if (filters.source !== 'All' && lead.source !== filters.source) return false;
-      if (filters.eventType !== 'All' && lead.event_type !== filters.eventType) return false;
-
-      if (filters.followUpState !== 'All') {
-        const followUp = getFollowUpStatus(lead.next_follow_up_at);
-        if (filters.followUpState === 'Overdue' && followUp.status !== 'overdue') return false;
-        if (filters.followUpState === 'Today' && followUp.status !== 'today') return false;
-        if (filters.followUpState === 'Upcoming' && followUp.status !== 'upcoming' && followUp.status !== 'tomorrow') return false;
-        if (filters.followUpState === 'None' && followUp.status !== 'none') return false;
-      }
-
-      if (filters.searchQuery.trim()) {
-        const q = filters.searchQuery.toLowerCase();
-        const nameMatch = lead.customer_name.toLowerCase().includes(q);
-        const phoneMatch = lead.phone.includes(q);
-        const reqMatch = lead.requirement ? lead.requirement.toLowerCase().includes(q) : false;
-        
-        const discussions = getDiscussionsByLeadId(lead.id);
-        const discMatch = discussions.some((d) => d.body.toLowerCase().includes(q));
-
-        if (!nameMatch && !phoneMatch && !reqMatch && !discMatch) {
-          return false;
-        }
-      }
-
-      return true;
+  const fetchLeads = useCallback(async (offset: number, replace: boolean) => {
+    setIsLoadingMore(true);
+    const params = new URLSearchParams({
+      offset: String(offset),
+      limit: '5',
+      search: filters.searchQuery,
+      status: filters.status,
+      priority: filters.priority,
+      ownerId: filters.ownerId,
+      source: filters.source,
+      eventType: filters.eventType,
+      followUp: filters.followUpState,
+      archived: String(filters.showArchived),
+      sortBy: filters.sortBy,
+      sortOrder: filters.sortOrder,
     });
-  }, [leads, filters, getDiscussionsByLeadId]);
+    try {
+      const response = await fetch(`/api/leads?${params.toString()}`);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Unable to load leads.');
+      const nextLeads = (payload.leads || []) as Lead[];
+      setLoadedLeads((current) => replace ? nextLeads : [...current, ...nextLeads]);
+      setTotalLeads(payload.total || 0);
+      setHasMore(Boolean(payload.hasMore));
+    } catch (error) {
+      console.error('Paginated lead loading failed:', error);
+      if (replace) setLoadedLeads([]);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    void fetchLeads(0, true);
+  }, [fetchLeads, refreshNonce]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasMore) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && !isLoadingMore) {
+        void fetchLeads(loadedLeads.length, false);
+      }
+    }, { rootMargin: '240px' });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [fetchLeads, hasMore, isLoadingMore, loadedLeads.length]);
 
   return (
     <div className="space-y-4">
@@ -109,7 +123,7 @@ function LeadsContent() {
               Leads
             </span>
             <span className="text-[12px]" style={{ color: 'var(--foreground-muted)' }}>
-              • {filteredLeads.length} inquiries found
+              • {totalLeads} inquiries found
             </span>
           </div>
           <h1 className="text-[18px] font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
@@ -143,10 +157,14 @@ function LeadsContent() {
       />
 
       {/* Lead List */}
-      <LeadList leads={filteredLeads} onResetFilters={handleReset} />
+      <LeadList leads={loadedLeads} onResetFilters={handleReset} />
+      <div ref={loadMoreRef} className="min-h-8 flex items-center justify-center">
+        {isLoadingMore && <span className="text-[12px]" style={{ color: 'var(--foreground-muted)' }}>Loading more leads...</span>}
+        {!isLoadingMore && loadedLeads.length > 0 && !hasMore && <span className="text-[12px]" style={{ color: 'var(--foreground-muted)' }}>No more leads</span>}
+      </div>
 
       {/* Create Lead Modal */}
-      <CreateLeadModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
+      <CreateLeadModal isOpen={isCreateOpen} onClose={() => { setIsCreateOpen(false); setRefreshNonce((value) => value + 1); }} />
     </div>
   );
 }
