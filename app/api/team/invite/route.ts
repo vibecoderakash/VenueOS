@@ -100,9 +100,13 @@ export async function POST(req: Request) {
     let createdUserId: string | null = null;
     let inviteSent = false;
 
+    const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const redirectTo = `${origin}/accept-invite`;
+
     if (adminClient) {
-      // 7. Send invitation via Supabase Auth Admin API
+      // 7. Send invitation via Supabase Auth Admin API with redirectTo pointing to accept-invite
       const { data: inviteData, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(cleanEmail, {
+        redirectTo,
         data: {
           full_name: cleanName,
           name: cleanName,
