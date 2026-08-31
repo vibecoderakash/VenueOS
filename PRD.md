@@ -314,6 +314,7 @@ The current lead form supports:
 - Date/time placeholders are readable.
 - Select fields follow the application theme.
 - Event date and guest controls remain aligned in a row.
+- Every schema-supported event type, including Party, is available in the form.
 - Phone number is mandatory where the workflow requires it.
 
 ## 8.3 Implemented Lead Operations

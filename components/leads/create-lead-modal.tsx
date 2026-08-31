@@ -344,6 +344,7 @@ export function CreateLeadModal({ isOpen, onClose }: CreateLeadModalProps) {
                   <option value="Anniversary">Anniversary</option>
                   <option value="Kitty Party">Kitty Party</option>
                   <option value="Corporate">Corporate Event</option>
+                  <option value="Party">Party</option>
                   <option value="Annaprashan">Annaprashan</option>
                   <option value="Other">Other</option>
                   <option value="not_provided">Not Provided</option>
