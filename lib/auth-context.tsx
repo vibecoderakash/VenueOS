@@ -379,6 +379,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (data.user) {
+          // Check account status before the general session validation so an
+          // inactive but otherwise valid account receives the correct reason.
+          const { data: loginProfile } = await supabase
+            .from('profiles')
+            .select('is_active, active')
+            .eq('id', data.user.id)
+            .maybeSingle();
+
+          if (loginProfile && (loginProfile.is_active === false || loginProfile.active === false)) {
+            await supabase.auth.signOut().catch(() => {});
+            return {
+              success: false,
+              error: 'Your account is inactive. Please contact your administrator or venue owner to activate your account.',
+            };
+          }
+
           const hasOrganizationAccess = await handleSession(data.session);
           if (!hasOrganizationAccess) {
             return {
