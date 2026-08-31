@@ -325,6 +325,7 @@ The current lead form supports:
 - Selecting a shortcut never writes to the database immediately.
 - The user must explicitly select Save to persist a new or changed follow-up.
 - Cancel discards shortcut or manual edits and restores the currently saved follow-up.
+- Saving a follow-up requires both a valid date/time and a non-empty action note; the database enforces the same rule.
 
 ## 8.3 Implemented Lead Operations
 

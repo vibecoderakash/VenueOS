@@ -24,6 +24,7 @@ export function FollowupCard({ lead }: FollowupCardProps) {
     formatForDateTimeLocal(lead.next_follow_up_at)
   );
   const [note, setNote] = useState(lead.follow_up_note || '');
+  const [validationError, setValidationError] = useState('');
 
   const followUp = getFollowUpStatus(lead.next_follow_up_at);
   const isOverdue = followUp.status === 'overdue';
@@ -34,10 +35,18 @@ export function FollowupCard({ lead }: FollowupCardProps) {
   };
 
   const handleSave = async () => {
+    const hasDate = Boolean(followUpDate);
+    const hasNote = Boolean(note.trim());
+    if (hasDate !== hasNote) {
+      setValidationError('Follow-up date/time and action note are both required.');
+      return;
+    }
+
+    setValidationError('');
     await updateFollowUp(
       lead.id,
-      followUpDate ? new Date(followUpDate).toISOString() : null,
-      note || null
+      hasDate ? new Date(followUpDate).toISOString() : null,
+      hasNote ? note.trim() : null
     );
     setIsEditing(false);
   };
@@ -46,6 +55,7 @@ export function FollowupCard({ lead }: FollowupCardProps) {
     if (presetType === 'clear') {
       setFollowUpDate('');
       setNote('');
+      setValidationError('');
       setIsEditing(true);
       return;
     }
@@ -70,6 +80,7 @@ export function FollowupCard({ lead }: FollowupCardProps) {
     const isoString = d.toISOString();
     setFollowUpDate(isoString.slice(0, 16));
     setNote(defaultNote);
+    setValidationError('');
     setIsEditing(true);
   };
 
@@ -219,8 +230,12 @@ export function FollowupCard({ lead }: FollowupCardProps) {
             </label>
             <input
               type="datetime-local"
+              required
               value={followUpDate}
-              onChange={(e) => setFollowUpDate(e.target.value)}
+              onChange={(e) => {
+                setFollowUpDate(e.target.value);
+                setValidationError('');
+              }}
               className="w-full rounded-[6px] px-2 py-1 text-[12px] focus:outline-none"
               style={{
                 backgroundColor: 'var(--surface-secondary)',
@@ -239,9 +254,13 @@ export function FollowupCard({ lead }: FollowupCardProps) {
             </label>
             <input
               type="text"
+              required
               placeholder="e.g. Call customer back regarding menu options..."
               value={note}
-              onChange={(e) => setNote(e.target.value)}
+              onChange={(e) => {
+                setNote(e.target.value);
+                setValidationError('');
+              }}
               className="w-full rounded-[6px] px-2 py-1 text-[12px] focus:outline-none"
               style={{
                 backgroundColor: 'var(--surface-secondary)',
@@ -251,12 +270,19 @@ export function FollowupCard({ lead }: FollowupCardProps) {
             />
           </div>
 
+          {validationError && (
+            <p className="text-[12px] font-semibold" style={{ color: 'var(--danger)' }}>
+              {validationError}
+            </p>
+          )}
+
           <div className="flex items-center justify-end gap-1.5 pt-1">
             <button
-                  onClick={() => {
-                    resetDraft();
-                    setIsEditing(false);
-                  }}
+              onClick={() => {
+                resetDraft();
+                setValidationError('');
+                setIsEditing(false);
+              }}
               className="px-2.5 py-1 text-[12px] font-medium"
               style={{ color: 'var(--foreground-muted)' }}
             >
