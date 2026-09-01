@@ -128,7 +128,7 @@ export function Sidebar() {
     <aside
       className={cn(
         'hidden md:flex flex-shrink-0 flex-col h-screen sticky top-0 z-30 select-none transition-[width] duration-200',
-        isCollapsed ? 'w-[76px]' : 'w-[256px]'
+        isCollapsed ? 'w-[68px]' : 'w-[232px]'
       )}
       style={{
         backgroundColor: 'var(--sidebar)',
@@ -140,31 +140,31 @@ export function Sidebar() {
         <Link
           href="/"
           className={cn(
-            'flex items-center gap-3 py-4 group transition-colors',
-            isCollapsed ? 'justify-center px-2 w-full' : 'px-5'
+            'flex items-center gap-2.5 py-3 group transition-colors',
+            isCollapsed ? 'justify-center px-2 w-full' : 'px-4'
           )}
         >
           <div
-            className="w-10 h-10 flex items-center justify-center flex-shrink-0"
+            className="w-8 h-8 flex items-center justify-center flex-shrink-0"
           >
             <Image
               src="/logo.png"
               alt="VenueOS Logo"
-              width={40}
-              height={40}
-              className="w-full h-full object-contain drop-shadow-md"
+              width={32}
+              height={32}
+              className="w-full h-full object-contain drop-shadow-sm"
               priority
             />
           </div>
           {!isCollapsed && <div className="flex flex-col min-w-0">
             <span
-              className="text-[15px] font-extrabold tracking-wide leading-none"
+              className="text-[13.5px] font-bold tracking-wide leading-none"
               style={{ color: 'var(--sidebar-foreground)' }}
             >
               VENUE OS
             </span>
             <span
-              className="text-[11px] font-semibold mt-1"
+              className="text-[10px] font-medium mt-0.5"
               style={{ color: 'var(--sidebar-foreground-muted)' }}
             >
               Banquet Hall V1
@@ -174,28 +174,28 @@ export function Sidebar() {
       </div>
 
       {/* Venue Context Card */}
-      <div className={cn('py-3', isCollapsed ? 'px-2' : 'px-4')} style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
+      <div className={cn('py-2', isCollapsed ? 'px-2' : 'px-3')} style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
         <div
-          className={cn('rounded-[10px] transition-colors', isCollapsed ? 'p-2.5 flex justify-center' : 'px-3 py-2.5')}
+          className={cn('rounded-[8px] transition-colors', isCollapsed ? 'p-1.5 flex justify-center' : 'px-2.5 py-1.5')}
           style={{
             backgroundColor: 'var(--sidebar-surface)',
             border: '1px solid var(--sidebar-border)',
           }}
         >
-          <div className={cn('flex items-center gap-2.5', isCollapsed && 'justify-center')}>
+          <div className={cn('flex items-center gap-2', isCollapsed && 'justify-center')}>
             <span
-              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              className="w-2 h-2 rounded-full flex-shrink-0"
               style={{ backgroundColor: 'var(--success)' }}
             />
             {!isCollapsed && <span
-              className="text-[13px] font-bold truncate leading-none"
+              className="text-[12px] font-semibold truncate leading-none"
               style={{ color: 'var(--sidebar-foreground)' }}
             >
               {organization.name}
             </span>}
           </div>
           {!isCollapsed && <span
-            className="text-[11px] font-semibold block mt-1.5 leading-none"
+            className="text-[10px] font-medium block mt-1 leading-none"
             style={{ color: 'var(--sidebar-foreground-muted)' }}
           >
             Single-Venue Instance
@@ -204,11 +204,11 @@ export function Sidebar() {
       </div>
 
       {/* Navigation Sections */}
-      <nav className={cn('flex-1 py-3.5 space-y-6 overflow-y-auto', isCollapsed ? 'px-2' : 'px-3.5')}>
+      <nav className={cn('flex-1 py-3 space-y-4 overflow-y-auto', isCollapsed ? 'px-2' : 'px-2.5')}>
         {navSections.map((section) => (
-          <div key={section.title} className="space-y-1.5">
+          <div key={section.title} className="space-y-1">
             {!isCollapsed && <p
-              className="text-[11px] font-extrabold uppercase tracking-wider px-2.5 mb-2"
+              className="text-[10px] font-bold uppercase tracking-wider px-2 mb-1"
               style={{ color: 'var(--sidebar-foreground-muted)' }}
             >
               {section.title}
@@ -225,18 +225,18 @@ export function Sidebar() {
                   <div
                     key={item.name}
                     className={cn(
-                      'flex items-center justify-between py-2.5 rounded-[10px] text-[13.5px] font-semibold opacity-50 cursor-not-allowed',
-                      isCollapsed ? 'justify-center px-2' : 'px-3'
+                      'flex items-center justify-between py-1.5 rounded-[8px] text-[12.5px] font-medium opacity-50 cursor-not-allowed',
+                      isCollapsed ? 'justify-center px-2' : 'px-2.5'
                     )}
                     style={{ color: 'var(--sidebar-foreground-muted)' }}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <item.icon className="w-4 h-4 flex-shrink-0" />
                       {!isCollapsed && <span className="truncate">{item.name}</span>}
                     </div>
                     {!isCollapsed && item.badge && (
                       <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-[5px]"
+                        className="text-[9px] font-semibold px-1.5 py-0.2 rounded-[4px]"
                         style={{
                           backgroundColor: 'var(--sidebar-surface-secondary)',
                           color: 'var(--sidebar-foreground-muted)',
@@ -254,17 +254,17 @@ export function Sidebar() {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    'flex items-center justify-between py-2.5 rounded-[10px] text-[14px] transition-all duration-150 group relative',
-                    isCollapsed ? 'justify-center px-2' : 'px-3',
+                    'flex items-center justify-between py-2 rounded-[8px] text-[13px] transition-all duration-150 group relative',
+                    isCollapsed ? 'justify-center px-2' : 'px-2.5',
                     isActive
-                      ? 'bg-[#4F46E5] text-white font-bold shadow-md shadow-indigo-900/40 ring-1 ring-white/15'
+                      ? 'bg-[#4F46E5] text-white font-bold shadow-sm shadow-indigo-900/30 ring-1 ring-white/15'
                       : 'text-slate-300 hover:text-white hover:bg-white/10 font-semibold'
                   )}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <item.icon
                       className={cn(
-                        'w-5 h-5 flex-shrink-0 transition-transform duration-150 group-hover:scale-105',
+                        'w-4 h-4 flex-shrink-0 transition-transform duration-150 group-hover:scale-105',
                         isActive
                           ? 'text-white stroke-[2.2]'
                           : 'text-slate-400 group-hover:text-slate-200'
@@ -276,7 +276,7 @@ export function Sidebar() {
                   {!isCollapsed && item.badge && (
                     <span
                       className={cn(
-                        'text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center',
+                        'text-[10px] font-bold px-1.5 py-0.2 rounded-full min-w-[18px] text-center',
                         isActive
                           ? item.badgeVariant === 'danger'
                             ? 'bg-rose-500 text-white'
@@ -297,27 +297,27 @@ export function Sidebar() {
       </nav>
 
       {/* Sidebar collapse control */}
-      <div className={cn('pt-2 pb-1', isCollapsed ? 'px-2' : 'px-3.5')}>
+      <div className={cn('pt-1 pb-1', isCollapsed ? 'px-2' : 'px-2.5')}>
         <button
           type="button"
           onClick={toggleSidebar}
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={cn(
-            'w-full flex items-center rounded-[10px] py-2.5 text-[13px] font-bold transition-colors hover:bg-white/5 cursor-pointer',
-            isCollapsed ? 'justify-center px-2' : 'gap-3 px-3'
+            'w-full flex items-center rounded-[8px] py-1.5 text-[12px] font-medium transition-colors hover:bg-white/5 cursor-pointer',
+            isCollapsed ? 'justify-center px-2' : 'gap-2.5 px-2.5'
           )}
           style={{ color: 'var(--sidebar-foreground-muted)' }}
         >
-          {isCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+          {isCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
           {!isCollapsed && <span>Collapse sidebar</span>}
         </button>
       </div>
 
       {/* User Profile & Sign Out Footer */}
-      <div className={cn('p-3.5', isCollapsed && 'px-2')} style={{ borderTop: '1px solid var(--sidebar-border)' }}>
+      <div className={cn('p-2.5', isCollapsed && 'px-2')} style={{ borderTop: '1px solid var(--sidebar-border)' }}>
         <div
-          className={cn('rounded-[12px] p-3 space-y-2.5 transition-colors', isCollapsed && 'p-2')}
+          className={cn('rounded-[10px] p-2 space-y-2 transition-colors', isCollapsed && 'p-1.5')}
           style={{
             backgroundColor: 'var(--sidebar-surface)',
             border: '1px solid var(--sidebar-border)',
@@ -325,9 +325,9 @@ export function Sidebar() {
         >
           {/* User Display */}
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
-                className="w-9 h-9 rounded-xl text-white font-extrabold text-[13px] flex items-center justify-center flex-shrink-0 shadow-xs"
+                className="w-7.5 h-7.5 rounded-lg text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs"
                 style={{
                   backgroundColor: isOwner ? '#d97706' : isManager ? '#4f46e5' : '#64748b',
                 }}
@@ -336,13 +336,13 @@ export function Sidebar() {
               </div>
               {!isCollapsed && <div className="min-w-0 flex-1">
                 <p
-                  className="text-[13.5px] font-bold truncate leading-tight"
+                  className="text-[12.5px] font-semibold truncate leading-tight"
                   style={{ color: 'var(--sidebar-foreground)' }}
                 >
                   {displayName}
                 </p>
                 <span
-                  className="inline-block text-[10.5px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-[5px] mt-1"
+                  className="inline-block text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded mt-0.5"
                   style={{
                     backgroundColor: roleBadge.bg,
                     color: roleBadge.color,
@@ -357,12 +357,12 @@ export function Sidebar() {
               type="button"
               onClick={signOut}
               title="Sign Out of VenueOS"
-              className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-rose-500/20 hover:text-rose-400"
+              className="p-1.5 rounded-lg transition-colors cursor-pointer hover:bg-rose-500/20 hover:text-rose-400"
               style={{
                 color: 'var(--sidebar-foreground-muted)',
               }}
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -449,31 +449,31 @@ export function MobileSidebarDrawer({
       >
         {/* Header with Brand & Close Button */}
         <div
-          className="flex items-center justify-between px-4 py-4"
+          className="flex items-center justify-between px-4 py-3"
           style={{ borderBottom: '1px solid var(--sidebar-border)' }}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <div
-              className="w-10 h-10 flex items-center justify-center flex-shrink-0"
+              className="w-8 h-8 flex items-center justify-center flex-shrink-0"
             >
               <Image
                 src="/logo.png"
                 alt="VenueOS Logo"
-                width={40}
-                height={40}
-                className="w-full h-full object-contain drop-shadow-md"
+                width={32}
+                height={32}
+                className="w-full h-full object-contain drop-shadow-sm"
                 priority
               />
             </div>
             <div>
               <span
-                className="text-[15px] font-extrabold tracking-wide block leading-tight"
+                className="text-[13.5px] font-bold tracking-wide block leading-tight"
                 style={{ color: 'var(--sidebar-foreground)' }}
               >
                 VENUE OS
               </span>
               <span
-                className="text-[11px] font-semibold"
+                className="text-[10px] font-medium"
                 style={{ color: 'var(--sidebar-foreground-muted)' }}
               >
                 Banquet Hall V1
@@ -483,37 +483,37 @@ export function MobileSidebarDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-white/5"
+            className="p-1.5 rounded-lg transition-colors cursor-pointer hover:bg-white/5"
             style={{ color: 'var(--sidebar-foreground-muted)' }}
             aria-label="Close menu"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4.5 h-4.5" />
           </button>
         </div>
 
         {/* Venue Context Card */}
-        <div className="p-3.5" style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
+        <div className="p-2.5" style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
           <div
-            className="rounded-[10px] p-3 space-y-1"
+            className="rounded-[8px] p-2 space-y-1"
             style={{
               backgroundColor: 'var(--sidebar-surface)',
               border: '1px solid var(--sidebar-border)',
             }}
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <span
-                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                className="w-2 h-2 rounded-full flex-shrink-0"
                 style={{ backgroundColor: 'var(--success)' }}
               />
               <span
-                className="text-[13.5px] font-bold truncate leading-none"
+                className="text-[12.5px] font-semibold truncate leading-none"
                 style={{ color: 'var(--sidebar-foreground)' }}
               >
                 {organization.name}
               </span>
             </div>
             <span
-              className="text-[11px] font-semibold block leading-none pt-0.5"
+              className="text-[10px] font-medium block leading-none pt-0.5"
               style={{ color: 'var(--sidebar-foreground-muted)' }}
             >
               Single-Venue Instance
@@ -522,16 +522,16 @@ export function MobileSidebarDrawer({
         </div>
 
         {/* Nav Items */}
-        <nav className="flex-1 py-4 px-3.5 space-y-5 overflow-y-auto">
+        <nav className="flex-1 py-3 px-2.5 space-y-4 overflow-y-auto">
           {navSections.map((section) => (
-            <div key={section.title} className="space-y-1.5">
+            <div key={section.title} className="space-y-1">
               <span
-                className="text-[11px] font-extrabold uppercase tracking-wider px-2.5 block"
+                className="text-[10px] font-bold uppercase tracking-wider px-2 block"
                 style={{ color: 'var(--sidebar-foreground-muted)' }}
               >
                 {section.title}
               </span>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = !item.disabled && (
@@ -542,12 +542,12 @@ export function MobileSidebarDrawer({
                     return (
                       <div
                         key={item.name}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[13.5px] font-semibold opacity-40 cursor-not-allowed"
+                        className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-[8px] text-[12.5px] font-medium opacity-40 cursor-not-allowed"
                         style={{ color: 'var(--sidebar-foreground-muted)' }}
                       >
-                        <Icon className="w-[18px] h-[18px] flex-shrink-0" />
+                        <Icon className="w-4 h-4 flex-shrink-0" />
                         <span>{item.name}</span>
-                        <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-[5px] bg-black/10 dark:bg-white/10">
+                        <span className="ml-auto text-[9px] font-semibold px-1.5 py-0.2 rounded bg-black/10 dark:bg-white/10">
                           {item.badge}
                         </span>
                       </div>
@@ -560,15 +560,15 @@ export function MobileSidebarDrawer({
                       href={item.href}
                       onClick={onClose}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[14px] transition-all duration-150',
+                        'flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[13px] transition-all duration-150',
                         isActive
-                          ? 'bg-[#4F46E5] text-white font-bold shadow-md shadow-indigo-900/40 ring-1 ring-white/15'
+                          ? 'bg-[#4F46E5] text-white font-bold shadow-sm shadow-indigo-900/30 ring-1 ring-white/15'
                           : 'text-slate-300 hover:text-white hover:bg-white/10 font-semibold'
                       )}
                     >
                       <Icon
                         className={cn(
-                          'w-5 h-5 flex-shrink-0',
+                          'w-4 h-4 flex-shrink-0',
                           isActive ? 'text-white stroke-[2.2]' : 'text-slate-400'
                         )}
                       />
@@ -576,7 +576,7 @@ export function MobileSidebarDrawer({
                       {item.badge && (
                         <span
                           className={cn(
-                            'ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center',
+                            'ml-auto text-[10px] font-bold px-1.5 py-0.2 rounded-full min-w-[18px] text-center',
                             isActive
                               ? item.badgeVariant === 'danger'
                                 ? 'bg-rose-500 text-white'
@@ -598,17 +598,17 @@ export function MobileSidebarDrawer({
         </nav>
 
         {/* Profile and Sign Out Footer */}
-        <div className="p-3.5" style={{ borderTop: '1px solid var(--sidebar-border)' }}>
+        <div className="p-2.5" style={{ borderTop: '1px solid var(--sidebar-border)' }}>
           <div
-            className="rounded-[12px] p-3 flex items-center justify-between gap-2"
+            className="rounded-[10px] p-2 flex items-center justify-between gap-2"
             style={{
               backgroundColor: 'var(--sidebar-surface)',
               border: '1px solid var(--sidebar-border)',
             }}
           >
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               <div
-                className="w-9 h-9 rounded-xl text-white font-extrabold text-[13px] flex items-center justify-center flex-shrink-0 shadow-xs"
+                className="w-7.5 h-7.5 rounded-lg text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-xs"
                 style={{
                   backgroundColor: isOwner ? '#d97706' : isManager ? '#4f46e5' : '#64748b',
                 }}
@@ -617,13 +617,13 @@ export function MobileSidebarDrawer({
               </div>
               <div className="min-w-0 flex-1">
                 <p
-                  className="text-[13.5px] font-bold truncate leading-tight"
+                  className="text-[12.5px] font-semibold truncate leading-tight"
                   style={{ color: 'var(--sidebar-foreground)' }}
                 >
                   {displayName}
                 </p>
                 <span
-                  className="inline-block text-[10.5px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-[5px] mt-1"
+                  className="inline-block text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded mt-0.5"
                   style={{
                     backgroundColor: roleBadge.bg,
                     color: roleBadge.color,
@@ -641,10 +641,10 @@ export function MobileSidebarDrawer({
                 signOut();
               }}
               title="Sign Out"
-              className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-rose-500/20 hover:text-rose-400"
+              className="p-1.5 rounded-lg transition-colors cursor-pointer hover:bg-rose-500/20 hover:text-rose-400"
               style={{ color: 'var(--sidebar-foreground-muted)' }}
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
