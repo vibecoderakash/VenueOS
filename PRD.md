@@ -780,7 +780,12 @@ A feature should not be considered complete merely because it visually works.
 - ✅ **Settings BusinessProfile Loading Skeleton:** Added animated loading pulse skeleton in `app/settings/page.tsx`, completely eliminating premature *"No venue connected"* flashes during cold load.
 - ✅ **Comprehensive Client-Side Storage Audit:** Verified 100% compliance with storage policies. Zero business records are persisted outside Supabase PostgreSQL; browser storage is strictly limited to UI preferences (`venue_os_theme`, `venue_os_sidebar_collapsed`) and standard Supabase Auth tokens.
 
-### 21.5 Upcoming VenueOS V2 Roadmap (Planned Work)
+### 21.5 VenueOS V1.0.5 Safe Git + Netlify Multi-Branch Architecture & Guardrails (Delivered)
+- ✅ **Multi-Branch Isolation Architecture:** Established `main` (Protected Production ➔ Netlify Production) and `development` (Active Development/Staging ➔ Netlify Branch Deploy: `https://development--<site>.netlify.app`).
+- ✅ **PR-Based Promotion Workflow:** All production changes require an approved Pull Request (`development` ➔ `main`). Direct pushes to `main` are blocked.
+- ✅ **Engineering Guardrails Codified:** Created master [`GUARDRAILS.md`](file:///c:/Users/akash/Desktop/AI%20Builder/VenueOS/GUARDRAILS.md) defining strict protocols across Git, Netlify, Supabase, and AI coding agent operations.
+
+### 21.6 Upcoming VenueOS V2 Roadmap (Planned Work)
 1. **Banquet Bookings & Slot Calendar:** Date/time slot locking, Hall availability calendar, double-booking prevention.
 2. **Function Sheets & Banquet Event Orders (BEO):** Food menu selection, decor specs, audio/visual requirements, itinerary timeline.
 3. **Quotation & PDF Generator:** Custom package builder, quotation generation, and 1-click printable PDF.
@@ -852,6 +857,13 @@ Whenever a feature becomes implemented, materially changes, or is removed, updat
 1. **NEVER push code to GitHub automatically or without explicit instruction.** Code must never be pushed as a side effect or on the AI's own initiative.
 2. **AI manages Release Versions automatically:** The AI must track and automatically determine the next semantic release version/tag (e.g. `v1.0.2` for UI/bug patches, `v1.1.0` for new feature modules, `v2.0.0` for major releases). The user does not need to calculate or manage version numbers.
 3. **Push Confirmation Flow:** When the user instructs to push to GitHub, the AI will present the auto-incremented version tag (e.g. `v1.0.2`), ask for final confirmation, and upon approval, tag and push cleanly to `https://github.com/vibecoderakash/VenueOS`.
+
+## Rule 14 — Multi-Branch & Production Protection Protocol
+
+1. **`main` is strictly reserved for production:** Direct commits or pushes to `main` are prohibited.
+2. **All active development occurs on `development`:** New features, bugfixes, and refactors must be committed to `development`.
+3. **Promotion to production is done via Pull Requests (`development` ➔ `main`):** After testing and regression verification, code is merged to `main` for automated Netlify production deployment.
+4. **Follow `GUARDRAILS.md`:** All safeguards in `GUARDRAILS.md` must be observed at all times.
 
 ---
 
