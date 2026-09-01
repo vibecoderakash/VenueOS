@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
@@ -52,9 +53,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#080b18] text-white">
         <div className="relative flex items-center justify-center mb-4">
-          <div className="absolute inset-0 bg-indigo-500 rounded-2xl blur-lg opacity-40 animate-pulse" />
-          <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-[#4f46e5] to-[#312e81] border border-indigo-400/40 flex items-center justify-center shadow-xl">
-            <Building2 className="w-7 h-7 text-white" />
+          <div className="absolute inset-0 bg-cyan-500/30 rounded-3xl blur-xl opacity-60 animate-pulse" />
+          <div className="relative w-16 h-16 flex items-center justify-center">
+            <Image
+              src="/logo.png"
+              alt="VenueOS Logo"
+              width={64}
+              height={64}
+              className="w-full h-full object-contain drop-shadow-xl"
+              priority
+            />
           </div>
         </div>
         <div className="flex items-center gap-2.5 text-slate-300 text-sm font-medium">

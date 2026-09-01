@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function SetupPage() {
   const router = useRouter();
@@ -306,12 +307,19 @@ export default function SetupPage() {
 
         <div className="relative z-10 flex flex-col justify-between h-full">
           <div>
-            {/* VenueOS Logo */}
-            <div className="flex items-center gap-3">
+            {/* VenueOS Official Logo */}
+            <div className="flex items-center gap-3.5">
               <div className="relative flex items-center justify-center flex-shrink-0">
-                <div className="absolute inset-0 bg-indigo-500 rounded-xl blur-md opacity-60 animate-pulse" />
-                <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-[#4f46e5] via-[#4338ca] to-[#312e81] border border-indigo-400/40 flex items-center justify-center shadow-lg shadow-indigo-950/50">
-                  <Building2 className="w-6 h-6 text-white" />
+                <div className="absolute inset-0 bg-cyan-500/30 rounded-2xl blur-xl opacity-60 animate-pulse" />
+                <div className="relative w-14 h-14 flex items-center justify-center">
+                  <Image
+                    src="/logo.png"
+                    alt="VenueOS Logo"
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-contain drop-shadow-xl"
+                    priority
+                  />
                 </div>
               </div>
               <div>

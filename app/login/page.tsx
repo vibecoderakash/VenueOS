@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Building2,
   Users2,
@@ -157,12 +158,19 @@ function LoginFormContent() {
           
           {/* Top Logo & Title */}
           <div>
-            <div className="flex items-center gap-3">
-              {/* Glowing VenueOS Hexagon Shield Logo */}
+            <div className="flex items-center gap-3.5">
+              {/* Glowing VenueOS Official Logo */}
               <div className="relative flex items-center justify-center flex-shrink-0">
-                <div className="absolute inset-0 bg-indigo-500 rounded-xl blur-md opacity-60 animate-pulse" />
-                <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-[#4f46e5] via-[#4338ca] to-[#312e81] border border-indigo-400/40 flex items-center justify-center shadow-lg shadow-indigo-950/50">
-                  <Building2 className="w-6 h-6 text-white flex-shrink-0" />
+                <div className="absolute inset-0 bg-cyan-500/30 rounded-2xl blur-xl opacity-60 animate-pulse" />
+                <div className="relative w-14 h-14 flex items-center justify-center">
+                  <Image
+                    src="/logo.png"
+                    alt="VenueOS Logo"
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-contain drop-shadow-xl"
+                    priority
+                  />
                 </div>
               </div>
 

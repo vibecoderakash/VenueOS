@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -144,10 +145,16 @@ export function Sidebar() {
           )}
         >
           <div
-            className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0 text-white shadow-xs"
-            style={{ backgroundColor: 'var(--primary)' }}
+            className="w-10 h-10 flex items-center justify-center flex-shrink-0"
           >
-            <Building2 className="w-5 h-5" />
+            <Image
+              src="/logo.png"
+              alt="VenueOS Logo"
+              width={40}
+              height={40}
+              className="w-full h-full object-contain drop-shadow-md"
+              priority
+            />
           </div>
           {!isCollapsed && <div className="flex flex-col min-w-0">
             <span
@@ -456,10 +463,16 @@ export function MobileSidebarDrawer({
         >
           <div className="flex items-center gap-3">
             <div
-              className="w-9 h-9 rounded-[10px] flex items-center justify-center flex-shrink-0 text-white shadow-xs"
-              style={{ backgroundColor: 'var(--primary)' }}
+              className="w-10 h-10 flex items-center justify-center flex-shrink-0"
             >
-              <Building2 className="w-5 h-5" />
+              <Image
+                src="/logo.png"
+                alt="VenueOS Logo"
+                width={40}
+                height={40}
+                className="w-full h-full object-contain drop-shadow-md"
+                priority
+              />
             </div>
             <div>
               <span
