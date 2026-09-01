@@ -347,42 +347,42 @@ function BusinessProfile() {
 
         {/* Venue Profile Picture / Logo Section */}
         <div
-          className="p-4 rounded-[10px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors"
+          className="p-4 sm:p-5 rounded-[12px] flex flex-col sm:flex-row sm:items-center justify-between gap-5 transition-colors"
           style={{
             backgroundColor: 'var(--surface-secondary)',
             border: '1px solid var(--border)',
           }}
         >
-          <div className="flex items-center gap-3.5">
-            <div className="relative w-14 h-14 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 shadow-xs border-2 border-indigo-500/30 bg-surface">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-[16px] overflow-hidden flex items-center justify-center flex-shrink-0 shadow-md border-2 border-indigo-500/30 bg-slate-900/40 p-2">
               {draft.logo_url ? (
                 <img
                   src={draft.logo_url}
                   alt={draft.name || 'Venue Logo'}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain drop-shadow-sm rounded-[10px]"
                 />
               ) : (
                 <div
-                  className="w-full h-full flex flex-col items-center justify-center text-white font-extrabold text-lg shadow-inner"
+                  className="w-full h-full rounded-[10px] flex flex-col items-center justify-center text-white font-black text-3xl shadow-inner"
                   style={{ backgroundColor: 'var(--primary)' }}
                 >
                   {(draft.name || 'V').charAt(0).toUpperCase()}
                 </div>
               )}
               {logoUploading && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="absolute inset-0 bg-black/70 flex items-center justify-center rounded-[16px]">
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
             </div>
 
-            <div>
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h3 className="text-[13px] font-bold" style={{ color: 'var(--foreground)' }}>
-                  Organization Profile Picture
+                <h3 className="text-[14px] font-bold" style={{ color: 'var(--foreground)' }}>
+                  Organization Profile Picture & Logo
                 </h3>
                 <span
-                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
                   style={{
                     backgroundColor: 'var(--primary-soft)',
                     color: 'var(--primary)',
@@ -391,11 +391,14 @@ function BusinessProfile() {
                   Venue Brand
                 </span>
               </div>
-              <p className="text-[11.5px] mt-0.5" style={{ color: 'var(--foreground-muted)' }}>
-                Displayed on your sidebar, mobile headers, and client records. (PNG, JPG, WebP, Max 2MB)
+              <p className="text-[12px]" style={{ color: 'var(--foreground-muted)' }}>
+                Displayed across your Sidebar, Mobile Headers, and Banquet Quotation records.
+              </p>
+              <p className="text-[11px]" style={{ color: 'var(--foreground-muted)' }}>
+                Supports PNG, JPG, WebP, SVG (Recommended: 400×400px or transparent PNG, Max 2MB)
               </p>
               {logoError && (
-                <p className="text-[11px] text-rose-500 font-semibold mt-1">
+                <p className="text-[11.5px] text-rose-500 font-semibold pt-1">
                   {logoError}
                 </p>
               )}
@@ -403,7 +406,7 @@ function BusinessProfile() {
           </div>
 
           {isOwner && (
-            <div className="flex items-center gap-2 self-start sm:self-center flex-shrink-0">
+            <div className="flex items-center gap-2.5 self-start sm:self-center flex-shrink-0">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -414,15 +417,15 @@ function BusinessProfile() {
               />
               <label
                 htmlFor="venue-logo-upload"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold transition-all cursor-pointer shadow-xs hover:opacity-90"
+                className="flex items-center gap-2 px-3.5 py-2 rounded-[8px] text-[12.5px] font-bold transition-all cursor-pointer shadow-xs hover:opacity-90 active:scale-95"
                 style={{
                   backgroundColor: 'var(--surface)',
                   border: '1px solid var(--border)',
                   color: 'var(--foreground)',
                 }}
               >
-                <Camera className="w-3.5 h-3.5" style={{ color: 'var(--primary)' }} />
-                <span>{draft.logo_url ? 'Change Photo' : 'Upload Photo'}</span>
+                <Camera className="w-4 h-4" style={{ color: 'var(--primary)' }} />
+                <span>{draft.logo_url ? 'Change Logo' : 'Upload Logo'}</span>
               </label>
 
               {draft.logo_url && (
@@ -430,10 +433,10 @@ function BusinessProfile() {
                   type="button"
                   onClick={handleRemoveLogo}
                   title="Remove Logo"
-                  className="p-1.5 rounded-[8px] transition-colors cursor-pointer text-slate-400 hover:text-rose-500 hover:bg-rose-500/10"
+                  className="p-2 rounded-[8px] transition-colors cursor-pointer text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 active:scale-95"
                   style={{ border: '1px solid var(--border)' }}
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               )}
             </div>
