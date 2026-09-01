@@ -24,6 +24,11 @@ export const metadata: Metadata = {
   title: 'Venue OS — Banquet Hall Management',
   description: 'Purpose-built lead management and conversation continuity for banquet halls.',
   keywords: ['banquet hall', 'venue management', 'lead management', 'CRM', 'events'],
+  icons: {
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
+  },
 };
 
 export default function RootLayout({
