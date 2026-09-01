@@ -182,11 +182,27 @@ export function Sidebar() {
             border: '1px solid var(--sidebar-border)',
           }}
         >
-          <div className={cn('flex items-center gap-2', isCollapsed && 'justify-center')}>
-            <span
-              className="w-2 h-2 rounded-full flex-shrink-0"
-              style={{ backgroundColor: 'var(--success)' }}
-            />
+          <div className={cn('flex items-center gap-2.5', isCollapsed && 'justify-center')}>
+            <div className="relative flex-shrink-0">
+              {organization.logo_url ? (
+                <img
+                  src={organization.logo_url}
+                  alt={organization.name || 'Venue Logo'}
+                  className="w-5.5 h-5.5 rounded-full object-cover border border-white/20 shadow-xs"
+                />
+              ) : (
+                <div
+                  className="w-5.5 h-5.5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-xs"
+                  style={{ backgroundColor: 'var(--primary)' }}
+                >
+                  {(organization.name || 'V').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[var(--sidebar-surface)]"
+                style={{ backgroundColor: 'var(--success)' }}
+              />
+            </div>
             {!isCollapsed && <span
               className="text-[12px] font-semibold truncate leading-none"
               style={{ color: 'var(--sidebar-foreground)' }}
@@ -500,11 +516,27 @@ export function MobileSidebarDrawer({
               border: '1px solid var(--sidebar-border)',
             }}
           >
-            <div className="flex items-center gap-2">
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: 'var(--success)' }}
-              />
+            <div className="flex items-center gap-2.5">
+              <div className="relative flex-shrink-0">
+                {organization.logo_url ? (
+                  <img
+                    src={organization.logo_url}
+                    alt={organization.name || 'Venue Logo'}
+                    className="w-6 h-6 rounded-full object-cover border border-white/20 shadow-xs"
+                  />
+                ) : (
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-xs"
+                    style={{ backgroundColor: 'var(--primary)' }}
+                  >
+                    {(organization.name || 'V').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span
+                  className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[var(--sidebar-surface)]"
+                  style={{ backgroundColor: 'var(--success)' }}
+                />
+              </div>
               <span
                 className="text-[12.5px] font-semibold truncate leading-none"
                 style={{ color: 'var(--sidebar-foreground)' }}

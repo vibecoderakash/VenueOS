@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 
 export function Header() {
   const router = useRouter();
-  const { metrics } = useData();
+  const { metrics, organization } = useData();
   const { profile } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -82,6 +82,17 @@ export function Header() {
           >
             <Menu className="w-4 h-4" />
           </button>
+
+          {/* Mobile Venue Brand Thumbnail */}
+          {organization.logo_url && (
+            <div className="md:hidden flex items-center flex-shrink-0">
+              <img
+                src={organization.logo_url}
+                alt={organization.name || 'Venue Logo'}
+                className="w-6 h-6 rounded-full object-cover border border-[var(--border)] shadow-xs"
+              />
+            </div>
+          )}
 
           <form onSubmit={handleSearchSubmit} className="relative w-full">
             <Search

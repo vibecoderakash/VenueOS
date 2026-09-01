@@ -17,6 +17,10 @@ import {
   AlertTriangle,
   Shield,
   LogOut,
+  Camera,
+  Upload,
+  Trash2,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { useData } from '@/lib/data-context';
 import { useAuth } from '@/lib/auth-context';
@@ -57,6 +61,52 @@ interface FieldChange {
 // Business Profile Component (extracted)
 // ============================================================
 
+function compressImageFile(file: File, maxSize: number = 360): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (file.type === 'image/svg+xml') {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxSize) {
+            height = Math.round((height * maxSize) / width);
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = Math.round((width * maxSize) / height);
+            height = maxSize;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(e.target?.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/webp', 0.88);
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function BusinessProfile() {
   const { organization, updateOrganization } = useData();
   const { profile: currentAuthProfile, isOwner } = useAuth();
@@ -69,6 +119,7 @@ function BusinessProfile() {
     address: organization.address || '',
     city: organization.city || '',
     currency: organization.currency || '—',
+    logo_url: organization.logo_url || '',
   }), [organization, currentAuthProfile]);
 
   // Draft values (while editing)
@@ -83,6 +134,9 @@ function BusinessProfile() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<FieldChange[]>([]);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState('');
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const fieldLabels: Record<string, string> = {
     name: 'Business Name',
@@ -91,12 +145,55 @@ function BusinessProfile() {
     address: 'Venue Address',
     city: 'City / Region',
     currency: 'Currency',
+    logo_url: 'Organization Logo',
   };
 
   const currencyLabels: Record<string, string> = {
     INR: 'INR — Indian Rupee (₹)',
     USD: 'USD — US Dollar ($)',
     AED: 'AED — UAE Dirham (د.إ)',
+  };
+
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoError('');
+
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError('Image size must be less than 2MB.');
+      return;
+    }
+
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml'];
+    if (!validTypes.includes(file.type)) {
+      setLogoError('Please upload a valid image (PNG, JPG, WebP, or SVG).');
+      return;
+    }
+
+    try {
+      setLogoUploading(true);
+      const dataUrl = await compressImageFile(file);
+      updateDraft('logo_url', dataUrl);
+      if (!isEditing && isOwner) {
+        await updateOrganization({ logo_url: dataUrl });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 3000);
+      }
+    } catch {
+      setLogoError('Failed to process image. Please try another file.');
+    } finally {
+      setLogoUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    updateDraft('logo_url', '');
+    if (!isEditing && isOwner) {
+      await updateOrganization({ logo_url: '' });
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    }
   };
 
   const handleEdit = () => {
@@ -147,6 +244,7 @@ function BusinessProfile() {
       address: draft.address,
       city: draft.city,
       currency: draft.currency,
+      logo_url: draft.logo_url,
     });
     setShowConfirmation(false);
     setIsEditing(false);
@@ -245,6 +343,101 @@ function BusinessProfile() {
               </span>
             )}
           </div>
+        </div>
+
+        {/* Venue Profile Picture / Logo Section */}
+        <div
+          className="p-4 rounded-[10px] flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors"
+          style={{
+            backgroundColor: 'var(--surface-secondary)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="relative w-14 h-14 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0 shadow-xs border-2 border-indigo-500/30 bg-surface">
+              {draft.logo_url ? (
+                <img
+                  src={draft.logo_url}
+                  alt={draft.name || 'Venue Logo'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div
+                  className="w-full h-full flex flex-col items-center justify-center text-white font-extrabold text-lg shadow-inner"
+                  style={{ backgroundColor: 'var(--primary)' }}
+                >
+                  {(draft.name || 'V').charAt(0).toUpperCase()}
+                </div>
+              )}
+              {logoUploading && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-[13px] font-bold" style={{ color: 'var(--foreground)' }}>
+                  Organization Profile Picture
+                </h3>
+                <span
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: 'var(--primary-soft)',
+                    color: 'var(--primary)',
+                  }}
+                >
+                  Venue Brand
+                </span>
+              </div>
+              <p className="text-[11.5px] mt-0.5" style={{ color: 'var(--foreground-muted)' }}>
+                Displayed on your sidebar, mobile headers, and client records. (PNG, JPG, WebP, Max 2MB)
+              </p>
+              {logoError && (
+                <p className="text-[11px] text-rose-500 font-semibold mt-1">
+                  {logoError}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {isOwner && (
+            <div className="flex items-center gap-2 self-start sm:self-center flex-shrink-0">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                onChange={handleLogoFileChange}
+                className="hidden"
+                id="venue-logo-upload"
+              />
+              <label
+                htmlFor="venue-logo-upload"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-semibold transition-all cursor-pointer shadow-xs hover:opacity-90"
+                style={{
+                  backgroundColor: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--foreground)',
+                }}
+              >
+                <Camera className="w-3.5 h-3.5" style={{ color: 'var(--primary)' }} />
+                <span>{draft.logo_url ? 'Change Photo' : 'Upload Photo'}</span>
+              </label>
+
+              {draft.logo_url && (
+                <button
+                  type="button"
+                  onClick={handleRemoveLogo}
+                  title="Remove Logo"
+                  className="p-1.5 rounded-[8px] transition-colors cursor-pointer text-slate-400 hover:text-rose-500 hover:bg-rose-500/10"
+                  style={{ border: '1px solid var(--border)' }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSaveClick} className="space-y-3">

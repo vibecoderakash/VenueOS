@@ -738,6 +738,7 @@ A feature should not be considered complete merely because it visually works.
 - ✅ **Official VenueOS 3D Logo Integration:** Added official VenueOS emblem across Desktop Sidebar (`sidebar.tsx`), Mobile Drawer (`sidebar.tsx`), AppShell session verification loader (`app-shell.tsx`), Login hero panel (`login/page.tsx`), and Setup hero panel (`setup/page.tsx`).
 - ✅ **High-Resolution Transparent Favicon:** Dedicated multi-device browser icon (`public/icon.png`, `app/icon.png`, `public/favicon.ico`, `app/favicon.ico`) with metadata mapping in `app/layout.tsx`.
 - ✅ **Sidebar Typography & Ergonomics Redesign:** Compact $232\text{px}$ sidebar width, $16\text{px}$ icons, high-contrast active indigo tab highlight (`#4F46E5`), and high-contrast badges for improved readability and comfort.
+- ✅ **Organization Profile Picture & Venue Branding:** Interactive photo uploader in Settings (`app/settings/page.tsx`) with client-side WebP compression (< 2MB validation), removal capability, instant Supabase persistence in `organizations.logo_url`, and live avatar display in Desktop Sidebar, Mobile Drawer, and Mobile Header.
 - ✅ **Strict Release Versioning Protocol (Rule 13):** AI automatically tracks and increments semantic versions, forbids auto-pushing, and requires explicit user confirmation before pushing to GitHub.
 
 ### 21.3 Upcoming VenueOS V2 Roadmap
@@ -746,7 +747,6 @@ A feature should not be considered complete merely because it visually works.
 3. **Quotation & PDF Generator:** Custom package builder, quotation generation, and 1-click printable PDF.
 4. **Advance Payments & Billing:** Token advances, milestone payment tracking, GST invoices, and receipts.
 5. **Advanced Floor & Kitchen Management:** Live operational dashboards for kitchen staff and floor managers.
-6. **Organization & Venue Profile Picture / Logo Branding:** Dedicated photo uploader in Settings, sidebar avatar context card, mobile header display, and automated PDF letterhead branding.
 
 ---
 
