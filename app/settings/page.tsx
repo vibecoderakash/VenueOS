@@ -155,6 +155,7 @@ function BusinessProfile() {
   };
 
   const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isEditing || !isOwner) return;
     const file = e.target.files?.[0];
     if (!file) return;
     setLogoError('');
@@ -174,11 +175,6 @@ function BusinessProfile() {
       setLogoUploading(true);
       const dataUrl = await compressImageFile(file);
       updateDraft('logo_url', dataUrl);
-      if (!isEditing && isOwner) {
-        await updateOrganization({ logo_url: dataUrl });
-        setIsSaved(true);
-        setTimeout(() => setIsSaved(false), 3000);
-      }
     } catch {
       setLogoError('Failed to process image. Please try another file.');
     } finally {
@@ -187,24 +183,22 @@ function BusinessProfile() {
     }
   };
 
-  const handleRemoveLogo = async () => {
+  const handleRemoveLogo = () => {
+    if (!isEditing || !isOwner) return;
     updateDraft('logo_url', '');
-    if (!isEditing && isOwner) {
-      await updateOrganization({ logo_url: '' });
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 3000);
-    }
   };
 
   const handleEdit = () => {
     setDraft({ ...savedValues });
     setIsEditing(true);
     setIsSaved(false);
+    setLogoError('');
   };
 
   const handleCancel = () => {
     setDraft({ ...savedValues });
     setIsEditing(false);
+    setLogoError('');
   };
 
   const handleSaveClick = (e: React.FormEvent) => {
@@ -214,8 +208,17 @@ function BusinessProfile() {
     const changes: FieldChange[] = [];
     for (const key of Object.keys(savedValues) as (keyof typeof savedValues)[]) {
       if (draft[key] !== savedValues[key]) {
-        const oldDisplay = key === 'currency' ? (currencyLabels[savedValues[key]] || savedValues[key]) : (savedValues[key] || '—');
-        const newDisplay = key === 'currency' ? (currencyLabels[draft[key]] || draft[key]) : (draft[key] || '—');
+        let oldDisplay = savedValues[key] || '—';
+        let newDisplay = draft[key] || '—';
+
+        if (key === 'currency') {
+          oldDisplay = currencyLabels[savedValues[key]] || savedValues[key];
+          newDisplay = currencyLabels[draft[key]] || draft[key];
+        } else if (key === 'logo_url') {
+          oldDisplay = savedValues.logo_url ? 'Current Logo' : 'No Logo';
+          newDisplay = draft.logo_url ? 'New Logo Selected' : 'Removed (Default Monogram)';
+        }
+
         changes.push({
           label: fieldLabels[key] || key,
           oldValue: oldDisplay,
@@ -406,40 +409,56 @@ function BusinessProfile() {
           </div>
 
           {isOwner && (
-            <div className="flex items-center gap-2.5 self-start sm:self-center flex-shrink-0">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
-                onChange={handleLogoFileChange}
-                className="hidden"
-                id="venue-logo-upload"
-              />
-              <label
-                htmlFor="venue-logo-upload"
-                className="flex items-center gap-2 px-3.5 py-2 rounded-[8px] text-[12.5px] font-bold transition-all cursor-pointer shadow-xs hover:opacity-90 active:scale-95"
-                style={{
-                  backgroundColor: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--foreground)',
-                }}
-              >
-                <Camera className="w-4 h-4" style={{ color: 'var(--primary)' }} />
-                <span>{draft.logo_url ? 'Change Logo' : 'Upload Logo'}</span>
-              </label>
-
-              {draft.logo_url && (
-                <button
-                  type="button"
-                  onClick={handleRemoveLogo}
-                  title="Remove Logo"
-                  className="p-2 rounded-[8px] transition-colors cursor-pointer text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 active:scale-95"
-                  style={{ border: '1px solid var(--border)' }}
+            isEditing ? (
+              <div className="flex items-center gap-2.5 self-start sm:self-center flex-shrink-0">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                  onChange={handleLogoFileChange}
+                  className="hidden"
+                  id="venue-logo-upload"
+                />
+                <label
+                  htmlFor="venue-logo-upload"
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-[8px] text-[12.5px] font-bold transition-all cursor-pointer shadow-xs hover:opacity-90 active:scale-95"
+                  style={{
+                    backgroundColor: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--foreground)',
+                  }}
                 >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+                  <Camera className="w-4 h-4" style={{ color: 'var(--primary)' }} />
+                  <span>{draft.logo_url ? 'Change Logo' : 'Upload Logo'}</span>
+                </label>
+
+                {draft.logo_url && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveLogo}
+                    title="Remove Logo"
+                    className="p-2 rounded-[8px] transition-colors cursor-pointer text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 active:scale-95"
+                    style={{ border: '1px solid var(--border)' }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 self-start sm:self-center flex-shrink-0">
+                <span
+                  className="text-[11.5px] font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5"
+                  style={{
+                    backgroundColor: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--foreground-muted)',
+                  }}
+                >
+                  <Shield className="w-3.5 h-3.5 text-slate-400" />
+                  Protected (Click Edit above)
+                </span>
+              </div>
+            )
           )}
         </div>
 
