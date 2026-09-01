@@ -774,7 +774,13 @@ A feature should not be considered complete merely because it visually works.
   - Full Test Suite: `85 / 85 passed` across all 6 test suites (`npm test`).
   - API, Security, E2E, Cursor Pagination, and Disaster Recovery verified.
 
-### 21.4 Upcoming VenueOS V2 Roadmap (Planned Work)
+### 21.4 VenueOS V1.0.4 Settings Organization-State Lifecycle Fix & Storage Audit (Delivered)
+- ✅ **Fixed Auth Profile Demotion on Token Refresh:** Preserved existing database-backed profile with `profileRef` in `lib/auth-context.tsx`, preventing Supabase `TOKEN_REFRESHED` / visibility change events from wiping `organization_id`.
+- ✅ **DataProvider Anti-Purge Guard:** Updated `loadFromSupabase()` in `lib/data-context.tsx` to preserve loaded organization state during background auth revalidation, resetting to `EMPTY_ORGANIZATION` only on genuine signout.
+- ✅ **Settings BusinessProfile Loading Skeleton:** Added animated loading pulse skeleton in `app/settings/page.tsx`, completely eliminating premature *"No venue connected"* flashes during cold load.
+- ✅ **Comprehensive Client-Side Storage Audit:** Verified 100% compliance with storage policies. Zero business records are persisted outside Supabase PostgreSQL; browser storage is strictly limited to UI preferences (`venue_os_theme`, `venue_os_sidebar_collapsed`) and standard Supabase Auth tokens.
+
+### 21.5 Upcoming VenueOS V2 Roadmap (Planned Work)
 1. **Banquet Bookings & Slot Calendar:** Date/time slot locking, Hall availability calendar, double-booking prevention.
 2. **Function Sheets & Banquet Event Orders (BEO):** Food menu selection, decor specs, audio/visual requirements, itinerary timeline.
 3. **Quotation & PDF Generator:** Custom package builder, quotation generation, and 1-click printable PDF.

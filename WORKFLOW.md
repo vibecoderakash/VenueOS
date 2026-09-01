@@ -1,6 +1,6 @@
 # 🏛️ VenueOS Architecture, Navigation & Engineering Workflow
 
-> **Current Version:** `v1.0.3`  
+> **Current Version:** `v1.0.4`  
 > **Status:** Active Evolution (V1 Complete & Hardened / V2 Planning)  
 > **Framework:** Next.js 16 (App Router), React 19, TypeScript 5.7, Tailwind CSS 4, Supabase SSR
 
@@ -46,6 +46,12 @@ VenueOS is structured as a **Single Page Application (SPA)** on top of the Next.
 - **Location:** `app/leads/[id]/page.tsx`
 - **Skeleton State:** Renders an animated pulse skeleton while `isLoading && !lead`.
 - **Not Found State:** Displays "Lead Not Found" **only after** `isLoading === false` and the lead record is confirmed non-existent.
+
+### 2.5 Settings Organization-State Lifecycle & Profile Anti-Demotion
+- **Location:** `lib/auth-context.tsx`, `lib/data-context.tsx`, `app/settings/page.tsx`
+- **Profile Anti-Demotion (`auth-context.tsx`):** On Supabase `TOKEN_REFRESHED` or browser tab visibility change, `handleSession()` preserves the existing database-backed profile with `profileRef`, preventing temporary overwrites with incomplete auth metadata.
+- **DataProvider State Preservation (`data-context.tsx`):** `loadFromSupabase()` preserves in-memory organization state during background auth revalidations, resetting to `EMPTY_ORGANIZATION` only on genuine logout (`!authIsAuthenticated`).
+- **Settings Skeleton (`settings/page.tsx`):** Renders an animated luxury skeleton card while `isLoading && !organization.id`, preventing false "No venue connected" displays.
 
 ---
 
