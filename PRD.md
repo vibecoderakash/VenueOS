@@ -521,6 +521,28 @@ Do not store in LocalStorage:
 
 ---
 
+# 13.1 Next.js App Router Navigation & Client-Side Lifecycle Architecture
+
+VenueOS employs a high-performance **Single Page Application (SPA)** client routing architecture built on Next.js 16 App Router:
+
+1. **Persistent Root Shell (`AppShell`):**
+   - The root layout (`app/layout.tsx`) mounts `ThemeProvider`, `AuthProvider`, `DataProvider`, and `AppShell`.
+   - The `<Sidebar>`, `<Header>`, and `<MobileBottomNav>` remain mounted in the DOM across all internal route transitions (`/`, `/leads`, `/reports`, `/settings`, `/leads/[id]`), preventing layout thrashing and DOM destructions.
+2. **Zero Full-Page Browser Reloads:**
+   - Internal tab switching and modal flows use Next.js `<Link>` and `useRouter()` exclusively.
+   - Standard navigation never generates HTML Document GET requests or triggers `window.location.reload()`.
+   - `window.location.replace()` is strictly isolated to explicit user sign-in and sign-out boundaries for cookie/session purging.
+3. **DataProvider Lifecycle & Data Invalidation:**
+   - `DataProvider` (`lib/data-context.tsx`) fetches initial business data (`organizations`, `profiles`, `leads`, `lead_discussions`, `lead_activity`) once upon user authentication.
+   - `pathname` is decoupled from data fetch effects to eliminate unnecessary background Supabase query storms during tab switching.
+   - Mutations (status updates, priority, assignments, discussions) execute **optimistically in React memory** before background Supabase writes.
+4. **Cold-Load Race Handling (`/leads/[id]`):**
+   - The lead detail page renders an animated skeleton loader (`isLoading && !lead`) during cold page loads and browser refreshes, preventing false "Lead Not Found" flashes.
+5. **Complete Filter Reactivity:**
+   - The paginated `/api/leads` query lifecycle accurately tracks `filters.tag` and `filters.lossReason` in its `useCallback` dependency array alongside status, priority, and date criteria.
+
+---
+
 # 14. Staff Management
 
 Settings includes team/staff management foundations.
@@ -741,7 +763,17 @@ A feature should not be considered complete merely because it visually works.
 - ✅ **Organization Profile Picture & Venue Branding:** Interactive photo uploader in Settings (`app/settings/page.tsx`) with client-side WebP compression (< 2MB validation), removal capability, instant Supabase persistence in `organizations.logo_url`, and live avatar display in Desktop Sidebar, Mobile Drawer, and Mobile Header.
 - ✅ **Strict Release Versioning Protocol (Rule 13):** AI automatically tracks and increments semantic versions, forbids auto-pushing, and requires explicit user confirmation before pushing to GitHub.
 
-### 21.3 Upcoming VenueOS V2 Roadmap
+### 21.3 VenueOS V1.0.3 Next.js Navigation & Data-Fetching Optimization (Delivered)
+- ✅ **Decoupled Route-Change Query Lifecycle:** Removed `pathname` dependency from `DataProvider` (`lib/data-context.tsx`). Navigation between tabs is $100\%$ client-side SPA with **$0$ duplicate Supabase queries**.
+- ✅ **Eliminated Full-Page Browser Reloads:** Verified zero occurrences of `location.reload()`, `location.href`, or raw document reloads during day-to-day operations.
+- ✅ **Cold-Load Skeleton Protection (`/leads/[id]`):** Added dedicated loading skeleton layout during DataContext initialization, completely eliminating the false "Lead Not Found" flash on direct link visits.
+- ✅ **Complete Filter Reactivity:** Added `filters.tag` and `filters.lossReason` to `useCallback` dependency array in `app/leads/page.tsx`, guaranteeing responsive filter querying.
+- ✅ **100% Passing Automated Test Verification:**
+  - TypeScript Compilation: `0 errors` (`npx tsc --noEmit`).
+  - Full Test Suite: `85 / 85 passed` across all 6 test suites (`npm test`).
+  - API, Security, E2E, Cursor Pagination, and Disaster Recovery verified.
+
+### 21.4 Upcoming VenueOS V2 Roadmap (Planned Work)
 1. **Banquet Bookings & Slot Calendar:** Date/time slot locking, Hall availability calendar, double-booking prevention.
 2. **Function Sheets & Banquet Event Orders (BEO):** Food menu selection, decor specs, audio/visual requirements, itinerary timeline.
 3. **Quotation & PDF Generator:** Custom package builder, quotation generation, and 1-click printable PDF.
