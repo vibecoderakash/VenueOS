@@ -52,20 +52,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!mounted || authStatus === 'initializing') {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#080b18] text-white">
-        <div className="relative flex items-center justify-center mb-4">
-          <div className="absolute inset-0 bg-cyan-500/30 rounded-3xl blur-xl opacity-60 animate-pulse" />
-          <div className="relative w-16 h-16 flex items-center justify-center">
+        <div className="relative flex items-center justify-center mb-6">
+          <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/30 to-indigo-600/30 rounded-full blur-3xl opacity-75 animate-pulse scale-125" />
+          <div className="relative w-48 h-48 flex items-center justify-center">
             <Image
               src="/logo.png"
               alt="VenueOS Logo"
-              width={64}
-              height={64}
-              className="w-full h-full object-contain drop-shadow-xl"
+              width={192}
+              height={192}
+              className="w-full h-full object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.8)]"
               priority
             />
           </div>
         </div>
-        <div className="flex items-center gap-2.5 text-slate-300 text-sm font-medium">
+        <div className="flex items-center gap-3 text-slate-300 text-[14px] font-medium tracking-wide">
           <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
           <span>Verifying Venue OS Session...</span>
         </div>
