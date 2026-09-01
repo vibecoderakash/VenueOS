@@ -108,19 +108,19 @@ function compressImageFile(file: File, maxSize: number = 360): Promise<string> {
 }
 
 function BusinessProfile() {
-  const { organization, updateOrganization } = useData();
+  const { organization, updateOrganization, isLoading } = useData();
   const { profile: currentAuthProfile, isOwner } = useAuth();
 
   // Current saved values (source of truth from DataContext & Owner details)
   const savedValues = React.useMemo(() => ({
-    name: organization.name || 'No venue connected',
+    name: organization.name || (isLoading ? '' : 'No venue connected'),
     phone: organization.phone || currentAuthProfile?.phone || '',
     email: organization.email || currentAuthProfile?.email || '',
     address: organization.address || '',
     city: organization.city || '',
     currency: organization.currency || '—',
     logo_url: organization.logo_url || '',
-  }), [organization, currentAuthProfile]);
+  }), [organization, currentAuthProfile, isLoading]);
 
   // Draft values (while editing)
   const [draft, setDraft] = useState({ ...savedValues });
@@ -270,6 +270,51 @@ function BusinessProfile() {
     { key: 'city' as const, label: 'City / Region', type: 'text' },
     { key: 'address' as const, label: 'Venue Address', type: 'text' },
   ];
+
+  if (isLoading && !organization.id) {
+    return (
+      <div
+        className="rounded-[12px] p-5 space-y-4 animate-pulse transition-colors"
+        style={{
+          backgroundColor: 'var(--surface)',
+          border: '1px solid var(--border)',
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-[8px] bg-slate-700/30" />
+            <div className="space-y-1.5">
+              <div className="w-36 h-4 rounded bg-slate-700/30" />
+              <div className="w-48 h-3 rounded bg-slate-700/20" />
+            </div>
+          </div>
+          <div className="w-20 h-7 rounded-[8px] bg-slate-700/20" />
+        </div>
+
+        <div className="space-y-4 pt-2">
+          <div className="w-28 h-28 rounded-[12px] bg-slate-700/20" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <div className="w-24 h-3 rounded bg-slate-700/20" />
+              <div className="w-full h-9 rounded bg-slate-700/30" />
+            </div>
+            <div className="space-y-1.5">
+              <div className="w-20 h-3 rounded bg-slate-700/20" />
+              <div className="w-full h-9 rounded bg-slate-700/30" />
+            </div>
+            <div className="space-y-1.5">
+              <div className="w-24 h-3 rounded bg-slate-700/20" />
+              <div className="w-full h-9 rounded bg-slate-700/30" />
+            </div>
+            <div className="space-y-1.5">
+              <div className="w-20 h-3 rounded bg-slate-700/20" />
+              <div className="w-full h-9 rounded bg-slate-700/30" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -747,7 +792,7 @@ function BusinessProfile() {
 // ============================================================
 
 export default function SettingsPage() {
-  const { organization } = useData();
+  const { organization, isLoading } = useData();
   const { theme, setTheme } = useTheme();
 
   // Theme options with accurate color swatches
@@ -962,7 +1007,7 @@ export default function SettingsPage() {
               fontFamily: 'var(--font-mono)',
             }}
           >
-            {organization.id}
+            {organization.id || (isLoading ? 'Loading...' : '—')}
           </code>
         </p>
       </div>

@@ -76,16 +76,28 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     const loadFromSupabase = async () => {
-      if (!authProfile?.organization_id) {
+      // 1. If genuinely unauthenticated, clear in-memory state cleanly
+      if (!authIsAuthenticated) {
         setOrganization(EMPTY_ORGANIZATION);
-        setProfiles(authProfile ? [authProfile] : []);
+        setProfiles([]);
         setLeads([]);
         setDiscussions({});
         setActivity({});
-        setIsAuthenticated(authIsAuthenticated);
+        setIsAuthenticated(false);
         setIsLoading(false);
         return;
       }
+
+      // 2. If authenticated but organization_id is not yet available, preserve existing loaded state
+      if (!authProfile?.organization_id) {
+        if (authProfile) {
+          setProfiles((current) => (current.length === 0 ? [authProfile] : current));
+        }
+        setIsAuthenticated(true);
+        return;
+      }
+
+      // 3. Authenticated with verified organization_id: Load from Supabase
       const supabase = createBrowserClient();
       if (!supabase) { setIsLoading(false); return; }
       setIsLoading(true);
@@ -104,7 +116,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       if (leadsResult.data) setLeads(leadsResult.data as Lead[]);
       if (discussionsResult.data) setDiscussions((discussionsResult.data as LeadDiscussion[]).reduce((all, item) => ({ ...all, [item.lead_id]: [...(all[item.lead_id] || []), item] }), {} as Record<string, LeadDiscussion[]>));
       if (activityResult.data) setActivity((activityResult.data as LeadActivity[]).reduce((all, item) => ({ ...all, [item.lead_id]: [...(all[item.lead_id] || []), item] }), {} as Record<string, LeadActivity[]>));
-      setIsAuthenticated(authIsAuthenticated);
+      setIsAuthenticated(true);
       setIsLoading(false);
     };
     void loadFromSupabase().catch((error) => { console.error('Supabase data load failed:', error); setIsLoading(false); });

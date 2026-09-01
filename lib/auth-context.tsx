@@ -33,9 +33,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authStatus, setAuthStatus] = useState<AuthStatus>('initializing');
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Keep a ref to the latest user for stable access inside callbacks without re-render cascades
+  // Keep refs to the latest user and profile for stable access inside callbacks without re-render cascades
   const userRef = useRef<User | null>(null);
   userRef.current = user;
+
+  const profileRef = useRef<Profile | null>(null);
+  profileRef.current = profile;
 
   // Build a fallback profile from user metadata immediately so auth never hangs
   const createProfileFromUser = useCallback((sessionUser: User): Profile => {
@@ -164,9 +167,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       try {
         setUser(session.user);
-        // Immediately set an initial profile from metadata to eliminate delay
-        const initialProfile = createProfileFromUser(session.user);
-        setProfile(initialProfile);
+        
+        // Preserve the existing database-backed profile if:
+        // 1. It belongs to the same authenticated user ID
+        // 2. It already contains a valid organization_id
+        // This prevents TOKEN_REFRESHED / visibility change from demoting the user to an incomplete metadata profile.
+        const currentLoadedProfile = profileRef.current;
+        if (
+          !currentLoadedProfile ||
+          currentLoadedProfile.id !== session.user.id ||
+          !currentLoadedProfile.organization_id
+        ) {
+          const initialProfile = createProfileFromUser(session.user);
+          setProfile(initialProfile);
+        }
 
         // Fetch / sync the database profile asynchronously
         const dbProfile = await fetchProfile(session.user.id, session.user.email, session.user);
