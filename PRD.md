@@ -734,6 +734,7 @@ A feature should not be considered complete merely because it visually works.
 - ✅ **Danger Zone Cascaded Deletion:** Safe, irreversible tenant deletion that cleanly scrubs all organization tables and auth users.
 - ✅ **Business Intelligence & Reporting:** Conversion win rates, follow-up adherence, sales rep leaderboard, marketing channel attribution, and root-cause lost inquiry breakdown.
 - ✅ **Automated Test Suites:** 85 automated tests passing with 0 failures across 6 suites (`npm test`).
+- ✅ **Next.js Security Hardening:** Upgraded to Next.js 16.3.4 (resolving CVE-2025-55182 vulnerability for clean Netlify deployment).
 
 ### 21.2 Upcoming VenueOS V2 Roadmap
 1. **Banquet Bookings & Slot Calendar:** Date/time slot locking, Hall availability calendar, double-booking prevention.
