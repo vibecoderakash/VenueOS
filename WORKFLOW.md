@@ -102,10 +102,14 @@ npm run test:e2e
 
 ## 5. 🛠️ Development & Git Release Rules (Rule 13)
 
-1. **Inspect Before Changing:** Always inspect existing code paths, API boundaries, and schemas before editing.
-2. **Never Auto-Push:** Do not push code to GitHub without explicit user instruction and confirmation.
-3. **Semantic Versioning Management:** The AI automatically calculates, tracks, and manages version numbers (`v1.0.1` ➔ `v1.0.2` ➔ `v1.0.3` ➔ `v2.0.0`).
-4. **Clean Commits:** Every milestone is committed locally with clear, descriptive commit messages.
+1. **Branch Workflow (`main` & `development`):**
+   - `main`: Protected production branch. Deploys to Netlify Production. Direct pushes blocked.
+   - `development`: Active feature and bugfix branch. Deploys to Netlify Branch Preview.
+   - All production releases occur through a validated **Pull Request (`development` ➔ `main`)**.
+2. **Inspect Before Changing:** Always inspect existing code paths, API boundaries, and schemas before editing.
+3. **Never Auto-Push:** Do not push code to GitHub without explicit user instruction and confirmation.
+4. **Semantic Versioning Management:** The AI automatically calculates, tracks, and manages version numbers (`v1.0.1` ➔ `v1.0.2` ➔ `v1.0.3` ➔ `v1.0.4` ➔ `v2.0.0`).
+5. **Clean Commits & Guardrails:** Full engineering protocols are codified in [`GUARDRAILS.md`](file:///c:/Users/akash/Desktop/AI%20Builder/VenueOS/GUARDRAILS.md).
 
 ---
 
