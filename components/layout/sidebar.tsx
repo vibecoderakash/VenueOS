@@ -254,46 +254,37 @@ export function Sidebar() {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    'flex items-center justify-between py-2.5 rounded-[10px] text-[14px] transition-all group',
+                    'flex items-center justify-between py-2.5 rounded-[10px] text-[14px] transition-all duration-150 group relative',
                     isCollapsed ? 'justify-center px-2' : 'px-3',
-                    isActive ? 'font-bold shadow-xs' : 'font-semibold hover:opacity-90'
-                  )}
-                  style={
                     isActive
-                      ? {
-                          backgroundColor: 'var(--sidebar-active-bg)',
-                          color: 'var(--sidebar-active-text)',
-                        }
-                      : {
-                          color: 'var(--sidebar-foreground)',
-                          backgroundColor: 'transparent',
-                        }
-                  }
+                      ? 'bg-[#4F46E5] text-white font-bold shadow-md shadow-indigo-900/40 ring-1 ring-white/15'
+                      : 'text-slate-300 hover:text-white hover:bg-white/10 font-semibold'
+                  )}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <item.icon
-                      className="w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-105"
-                      style={{
-                        color: isActive
-                          ? 'var(--sidebar-active-text)'
-                          : 'var(--sidebar-foreground-muted)',
-                      }}
+                      className={cn(
+                        'w-5 h-5 flex-shrink-0 transition-transform duration-150 group-hover:scale-105',
+                        isActive
+                          ? 'text-white stroke-[2.2]'
+                          : 'text-slate-400 group-hover:text-slate-200'
+                      )}
                     />
-                      {!isCollapsed && <span className="truncate">{item.name}</span>}
+                    {!isCollapsed && <span className="truncate">{item.name}</span>}
                   </div>
 
                   {!isCollapsed && item.badge && (
                     <span
-                      className="text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center"
-                      style={
-                        item.badgeVariant === 'danger'
-                          ? { backgroundColor: 'var(--danger)', color: '#FFFFFF' }
-                          : {
-                              backgroundColor: 'var(--sidebar-badge-bg)',
-                              color: 'var(--sidebar-foreground-muted)',
-                              border: '1px solid var(--sidebar-border)',
-                            }
-                      }
+                      className={cn(
+                        'text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center',
+                        isActive
+                          ? item.badgeVariant === 'danger'
+                            ? 'bg-rose-500 text-white'
+                            : 'bg-white/25 text-white'
+                          : item.badgeVariant === 'danger'
+                            ? 'bg-rose-500 text-white'
+                            : 'bg-slate-700/80 text-slate-300 border border-slate-600'
+                      )}
                     >
                       {item.badge}
                     </span>
@@ -569,25 +560,30 @@ export function MobileSidebarDrawer({
                       href={item.href}
                       onClick={onClose}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[14px] transition-colors',
+                        'flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[14px] transition-all duration-150',
                         isActive
-                          ? 'font-bold shadow-xs'
-                          : 'font-semibold hover:bg-white/5'
+                          ? 'bg-[#4F46E5] text-white font-bold shadow-md shadow-indigo-900/40 ring-1 ring-white/15'
+                          : 'text-slate-300 hover:text-white hover:bg-white/10 font-semibold'
                       )}
-                      style={{
-                        backgroundColor: isActive ? 'var(--sidebar-active-bg)' : 'transparent',
-                        color: isActive ? 'var(--sidebar-active-color)' : 'var(--sidebar-foreground-secondary)',
-                      }}
                     >
-                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      <Icon
+                        className={cn(
+                          'w-5 h-5 flex-shrink-0',
+                          isActive ? 'text-white stroke-[2.2]' : 'text-slate-400'
+                        )}
+                      />
                       <span>{item.name}</span>
                       {item.badge && (
                         <span
                           className={cn(
                             'ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full min-w-[22px] text-center',
-                            item.badgeVariant === 'danger'
-                              ? 'bg-rose-500 text-white'
-                              : 'bg-indigo-500/20 text-indigo-400'
+                            isActive
+                              ? item.badgeVariant === 'danger'
+                                ? 'bg-rose-500 text-white'
+                                : 'bg-white/25 text-white'
+                              : item.badgeVariant === 'danger'
+                                ? 'bg-rose-500 text-white'
+                                : 'bg-slate-700/80 text-slate-300 border border-slate-600'
                           )}
                         >
                           {item.badge}

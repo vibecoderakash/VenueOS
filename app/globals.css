@@ -84,6 +84,8 @@ select option:disabled {
   --sidebar-hover:                rgba(255, 255, 255, 0.06);
   --sidebar-primary-soft:         rgba(99, 102, 241, 0.15);
   --sidebar-badge-bg:             #2D3A4F;
+  --sidebar-active-bg:            #4F46E5;
+  --sidebar-active-text:          #FFFFFF;
 
   /* Typography Colors */
   --foreground:           #1F2937;
@@ -146,6 +148,8 @@ select option:disabled {
   --sidebar-hover:                rgba(255, 255, 255, 0.05);
   --sidebar-primary-soft:         #1E1B4B;
   --sidebar-badge-bg:             #334155;
+  --sidebar-active-bg:            #4F46E5;
+  --sidebar-active-text:          #FFFFFF;
 
   /* Typography Colors */
   --foreground:           #F8FAFC;
