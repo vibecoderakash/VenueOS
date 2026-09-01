@@ -803,13 +803,11 @@ Do not casually undo established behavior such as themed selects, date inputs, s
 
 Whenever a feature becomes implemented, materially changes, or is removed, update this PRD so future AI sessions have an accurate baseline.
 
-## Rule 13 — Strict Push Authorization & Release Protocol
+## Rule 13 — Strict Push Authorization & Automatic Semantic Versioning
 
 1. **NEVER push code to GitHub automatically or without explicit instruction.** Code must never be pushed as a side effect or on the AI's own initiative.
-2. When the user explicitly requests a GitHub push:
-   - Always ask the user for confirmation and the release version/tag (e.g. `v1.0.1`, `v1.0.2`, `v1.1.0`).
-   - Verify that `PRD.md` and local commits are clean and up to date.
-   - Only execute the `git push` command after receiving the user's explicit confirmation.
+2. **AI manages Release Versions automatically:** The AI must track and automatically determine the next semantic release version/tag (e.g. `v1.0.2` for UI/bug patches, `v1.1.0` for new feature modules, `v2.0.0` for major releases). The user does not need to calculate or manage version numbers.
+3. **Push Confirmation Flow:** When the user instructs to push to GitHub, the AI will present the auto-incremented version tag (e.g. `v1.0.2`), ask for final confirmation, and upon approval, tag and push cleanly to `https://github.com/vibecoderakash/VenueOS`.
 
 ---
 
