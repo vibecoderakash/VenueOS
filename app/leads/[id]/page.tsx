@@ -20,10 +20,58 @@ export default function LeadDetailPage() {
   const params = useParams();
   const leadId = params.id as string;
 
-  const { getLeadById } = useData();
+  const { getLeadById, isLoading } = useData();
   const lead = getLeadById(leadId);
 
   const [activeTab, setActiveTab] = useState<'discussions' | 'activity'>('discussions');
+
+  if (isLoading && !lead) {
+    return (
+      <div className="space-y-4 animate-pulse">
+        {/* Header Skeleton */}
+        <div
+          className="rounded-[12px] p-5 space-y-4"
+          style={{
+            backgroundColor: 'var(--surface)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <div className="w-48 h-6 rounded-[6px] bg-slate-700/30" />
+              <div className="w-32 h-4 rounded-[4px] bg-slate-700/20" />
+            </div>
+            <div className="flex gap-2">
+              <div className="w-24 h-8 rounded-[8px] bg-slate-700/30" />
+              <div className="w-24 h-8 rounded-[8px] bg-slate-700/30" />
+            </div>
+          </div>
+        </div>
+
+        {/* 2-Column Grid Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-2 space-y-3.5">
+            <div
+              className="rounded-[12px] p-5 h-64"
+              style={{
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+              }}
+            />
+          </div>
+          <div className="space-y-4">
+            <div
+              className="rounded-[12px] p-5 h-48"
+              style={{
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!lead) {
     return (

@@ -114,7 +114,20 @@ function LeadsContent() {
       setIsLoadingMore(false);
       isFetchingRef.current = false;
     }
-  }, [debouncedSearch, filters.status, filters.priority, filters.ownerId, filters.source, filters.eventType, filters.followUpState, filters.showArchived, filters.sortBy, filters.sortOrder]);
+  }, [
+    debouncedSearch,
+    filters.status,
+    filters.priority,
+    filters.ownerId,
+    filters.source,
+    filters.eventType,
+    filters.tag,
+    filters.lossReason,
+    filters.followUpState,
+    filters.showArchived,
+    filters.sortBy,
+    filters.sortOrder,
+  ]);
 
   // Initial load and filter change trigger
   useEffect(() => {
