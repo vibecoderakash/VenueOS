@@ -174,48 +174,60 @@ export function Sidebar() {
       </div>
 
       {/* Venue Context Card */}
-      <div className={cn('py-2', isCollapsed ? 'px-2' : 'px-3')} style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
+      <div className={cn('py-2.5', isCollapsed ? 'px-2' : 'px-3')} style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
         <div
-          className={cn('rounded-[8px] transition-colors', isCollapsed ? 'p-1.5 flex justify-center' : 'px-2.5 py-1.5')}
+          className={cn(
+            'rounded-[10px] p-2 transition-all',
+            isCollapsed ? 'flex justify-center' : 'flex items-center gap-3'
+          )}
           style={{
             backgroundColor: 'var(--sidebar-surface)',
             border: '1px solid var(--sidebar-border)',
           }}
         >
-          <div className={cn('flex items-center gap-2.5', isCollapsed && 'justify-center')}>
-            <div className="relative flex-shrink-0">
-              {organization.logo_url ? (
+          {/* Logo with Online Dot */}
+          <div className="relative flex-shrink-0">
+            {organization.logo_url ? (
+              <div className="w-10 h-10 rounded-[10px] overflow-hidden bg-slate-900/60 p-0.5 border border-white/15 shadow-sm flex items-center justify-center">
                 <img
                   src={organization.logo_url}
                   alt={organization.name || 'Venue Logo'}
-                  className="w-5.5 h-5.5 rounded-full object-cover border border-white/20 shadow-xs"
+                  className="w-full h-full object-contain"
                 />
-              ) : (
-                <div
-                  className="w-5.5 h-5.5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-xs"
-                  style={{ backgroundColor: 'var(--primary)' }}
-                >
-                  {(organization.name || 'V').charAt(0).toUpperCase()}
-                </div>
-              )}
-              <span
-                className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[var(--sidebar-surface)]"
-                style={{ backgroundColor: 'var(--success)' }}
-              />
-            </div>
-            {!isCollapsed && <span
-              className="text-[12px] font-semibold truncate leading-none"
-              style={{ color: 'var(--sidebar-foreground)' }}
-            >
-              {organization.name}
-            </span>}
+              </div>
+            ) : (
+              <div
+                className="w-10 h-10 rounded-[10px] flex items-center justify-center text-[15px] font-black text-white shadow-sm border border-white/10"
+                style={{ backgroundColor: 'var(--primary)' }}
+              >
+                {(organization.name || 'V').charAt(0).toUpperCase()}
+              </div>
+            )}
+            <span
+              className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-[var(--sidebar-surface)]"
+              style={{ backgroundColor: 'var(--success)' }}
+              title="Active Instance"
+            />
           </div>
-          {!isCollapsed && <span
-            className="text-[10px] font-medium block mt-1 leading-none"
-            style={{ color: 'var(--sidebar-foreground-muted)' }}
-          >
-            Single-Venue Instance
-          </span>}
+
+          {/* Name & Subtitle */}
+          {!isCollapsed && (
+            <div className="min-w-0 flex-1">
+              <p
+                className="text-[13px] font-bold leading-tight truncate"
+                style={{ color: 'var(--sidebar-foreground)' }}
+                title={organization.name}
+              >
+                {organization.name}
+              </p>
+              <span
+                className="text-[10px] font-medium block mt-0.5 leading-none"
+                style={{ color: 'var(--sidebar-foreground-muted)' }}
+              >
+                Single-Venue Instance
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -510,46 +522,52 @@ export function MobileSidebarDrawer({
         {/* Venue Context Card */}
         <div className="p-2.5" style={{ borderBottom: '1px solid var(--sidebar-border)' }}>
           <div
-            className="rounded-[8px] p-2 space-y-1"
+            className="rounded-[10px] p-2 flex items-center gap-3 transition-all"
             style={{
               backgroundColor: 'var(--sidebar-surface)',
               border: '1px solid var(--sidebar-border)',
             }}
           >
-            <div className="flex items-center gap-2.5">
-              <div className="relative flex-shrink-0">
-                {organization.logo_url ? (
+            {/* Logo with Online Dot */}
+            <div className="relative flex-shrink-0">
+              {organization.logo_url ? (
+                <div className="w-10 h-10 rounded-[10px] overflow-hidden bg-slate-900/60 p-0.5 border border-white/15 shadow-sm flex items-center justify-center">
                   <img
                     src={organization.logo_url}
                     alt={organization.name || 'Venue Logo'}
-                    className="w-6 h-6 rounded-full object-cover border border-white/20 shadow-xs"
+                    className="w-full h-full object-contain"
                   />
-                ) : (
-                  <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-xs"
-                    style={{ backgroundColor: 'var(--primary)' }}
-                  >
-                    {(organization.name || 'V').charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <span
-                  className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[var(--sidebar-surface)]"
-                  style={{ backgroundColor: 'var(--success)' }}
-                />
-              </div>
+                </div>
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-[10px] flex items-center justify-center text-[15px] font-black text-white shadow-sm border border-white/10"
+                  style={{ backgroundColor: 'var(--primary)' }}
+                >
+                  {(organization.name || 'V').charAt(0).toUpperCase()}
+                </div>
+              )}
               <span
-                className="text-[12.5px] font-semibold truncate leading-none"
+                className="absolute -bottom-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-[var(--sidebar-surface)]"
+                style={{ backgroundColor: 'var(--success)' }}
+                title="Active Instance"
+              />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p
+                className="text-[13px] font-bold leading-tight truncate"
                 style={{ color: 'var(--sidebar-foreground)' }}
+                title={organization.name}
               >
                 {organization.name}
+              </p>
+              <span
+                className="text-[10px] font-medium block mt-0.5 leading-none"
+                style={{ color: 'var(--sidebar-foreground-muted)' }}
+              >
+                Single-Venue Instance
               </span>
             </div>
-            <span
-              className="text-[10px] font-medium block leading-none pt-0.5"
-              style={{ color: 'var(--sidebar-foreground-muted)' }}
-            >
-              Single-Venue Instance
-            </span>
           </div>
         </div>
 
