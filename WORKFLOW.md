@@ -100,16 +100,45 @@ npm run test:e2e
 
 ---
 
-## 5. 🛠️ Development & Git Release Rules (Rule 13)
+## 5. 🛠️ Development & Git Release Rules (Rule 13 & Rule 14)
 
-1. **Branch Workflow (`main` & `development`):**
-   - `main`: Protected production branch. Deploys to Netlify Production. Direct pushes blocked.
-   - `development`: Active feature and bugfix branch. Deploys to Netlify Branch Preview.
-   - All production releases occur through a validated **Pull Request (`development` ➔ `main`)**.
-2. **Inspect Before Changing:** Always inspect existing code paths, API boundaries, and schemas before editing.
-3. **Never Auto-Push:** Do not push code to GitHub without explicit user instruction and confirmation.
-4. **Semantic Versioning Management:** The AI automatically calculates, tracks, and manages version numbers (`v1.0.1` ➔ `v1.0.2` ➔ `v1.0.3` ➔ `v1.0.4` ➔ `v2.0.0`).
-5. **Clean Commits & Guardrails:** Full engineering protocols are codified in [`GUARDRAILS.md`](file:///c:/Users/akash/Desktop/AI%20Builder/VenueOS/GUARDRAILS.md).
+### 5.1 Branch Roles & Production Safety
+- **`main`:** Protected production release branch. Automatically deploys to Netlify Production. Direct pushes are blocked.
+- **`development`:** Default development and staging branch. Automatically deploys to Netlify Branch Preview (`https://development--venusos.netlify.app`).
+
+### 5.2 Normal Development Lifecycle
+
+```text
+development
+    ↓
+implement feature / bugfix
+    ↓
+local testing (npm test + npx tsc --noEmit)
+    ↓
+push development (git push origin development)
+    ↓
+Netlify development/staging deployment
+    ↓
+production-like testing & verification
+    ↓
+regression testing
+    ↓
+Pull Request: development → main
+    ↓
+user review / approval
+    ↓
+merge into main
+    ↓
+Netlify production deployment
+```
+
+> **Critical Rule:** Production deployment happens **only** after the development version has passed testing and the change is intentionally merged into `main`.
+
+### 5.3 Engineering Protocols
+1. **Inspect Before Changing:** Always inspect existing code paths, API boundaries, and schemas before editing.
+2. **Never Auto-Push:** Do not push code to GitHub without explicit user instruction and confirmation.
+3. **Semantic Versioning Management:** The AI automatically calculates, tracks, and manages version numbers (`v1.0.1` ➔ `v1.0.2` ➔ `v1.0.3` ➔ `v1.0.4` ➔ `v1.0.5` ➔ `v2.0.0`).
+4. **Master Guardrails Reference:** Comprehensive Git branch protection, feature branching, emergency hotfix policy, Netlify rules, and Supabase RLS safeguards are codified in [`GUARDRAILS.md`](file:///c:/Users/akash/Desktop/AI%20Builder/VenueOS/GUARDRAILS.md).
 
 ---
 
